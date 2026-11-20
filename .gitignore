@@ -5,3 +5,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Live benchmark output (potentially commercially sensitive)
+aeon-live-results.json
+*.sqlite
