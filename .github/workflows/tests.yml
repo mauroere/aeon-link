@@ -21,6 +21,7 @@ jobs:
       - run: python examples/semantic_demo.py
       - run: python examples/benchmark_sample.py
       - run: python examples/preregistered_research.py generate --output /tmp/aeon-research-corpus.json
+      - run: python examples/audit_research_corpus.py --output /tmp/aeon-corpus-integrity.json
   cross-language:
     runs-on: ubuntu-latest
     steps:
