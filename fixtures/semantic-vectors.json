@@ -1,0 +1,185 @@
+{
+  "cases": [
+    {
+      "action": "observe",
+      "expected": {
+        "status": "satisfied",
+        "unknown": [],
+        "violations": []
+      },
+      "id": "ok",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": true
+        },
+        "metrics": {
+          "loss": 0
+        }
+      }
+    },
+    {
+      "action": "observe",
+      "expected": {
+        "status": "violated",
+        "unknown": [],
+        "violations": [
+          "dns"
+        ]
+      },
+      "id": "wrong_dns",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": false
+        },
+        "metrics": {
+          "loss": 0
+        }
+      }
+    },
+    {
+      "action": "read",
+      "expected": {
+        "status": "violated",
+        "unknown": [],
+        "violations": [
+          "packet_loss"
+        ]
+      },
+      "id": "bad_loss",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": true
+        },
+        "metrics": {
+          "loss": 2
+        }
+      }
+    },
+    {
+      "action": "observe",
+      "expected": {
+        "status": "incomplete",
+        "unknown": [
+          "packet_loss"
+        ],
+        "violations": []
+      },
+      "id": "missing_loss",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": true
+        }
+      }
+    },
+    {
+      "action": "write",
+      "expected": {
+        "status": "violated",
+        "unknown": [],
+        "violations": [
+          "action:unauthorized"
+        ]
+      },
+      "id": "write",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": true
+        },
+        "metrics": {
+          "loss": 0
+        }
+      }
+    },
+    {
+      "action": "observe",
+      "expected": {
+        "status": "violated",
+        "unknown": [],
+        "violations": [
+          "no_changes"
+        ]
+      },
+      "id": "config_change",
+      "state": {
+        "changes": {
+          "config": true
+        },
+        "dns": {
+          "resolved": true
+        },
+        "metrics": {
+          "loss": 0
+        }
+      }
+    },
+    {
+      "action": "observe",
+      "expected": {
+        "status": "incomplete",
+        "unknown": [
+          "packet_loss"
+        ],
+        "violations": []
+      },
+      "id": "bool_is_not_int",
+      "state": {
+        "changes": {
+          "config": false
+        },
+        "dns": {
+          "resolved": true
+        },
+        "metrics": {
+          "loss": true
+        }
+      }
+    }
+  ],
+  "contract": {
+    "allowed_actions": [
+      "observe",
+      "read"
+    ],
+    "clauses": [
+      {
+        "id": "dns",
+        "mode": "require",
+        "op": "eq",
+        "path": "/dns/resolved",
+        "value": true
+      },
+      {
+        "id": "no_changes",
+        "mode": "forbid",
+        "op": "eq",
+        "path": "/changes/config",
+        "value": true
+      },
+      {
+        "id": "packet_loss",
+        "mode": "require",
+        "op": "lte",
+        "path": "/metrics/loss",
+        "value": 1
+      }
+    ],
+    "profile": "aeon.semantic.contract/0.2"
+  },
+  "contract_digest": "491c83e095466c5f66c817dad5128c2409825e60505c5078facf3dad88a869b7",
+  "profile": "aeon.semantic.contract/0.2"
+}

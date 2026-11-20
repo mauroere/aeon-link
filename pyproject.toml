@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aeon-link-experimental"
+version = "0.4.0"
+description = "Experimental, transport-neutral semantic envelopes for agent interoperability"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name="AEON-Link contributors"}]
+dependencies = ["jsonschema>=4.18,<5"]
+classifiers = ["Development Status :: 2 - Pre-Alpha", "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License"]
+
+[project.scripts]
+aeon-link = "aeon_link.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aeon_link = ["schema.json"]

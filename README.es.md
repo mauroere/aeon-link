@@ -1,28 +1,68 @@
-# ÆON-Link v0.3.0 — Comunicación semántica entre inteligencias artificiales
+# ÆON-Link 0.4.0 — Interoperabilidad semántica experimental entre IA
 
-**Estado: experimental, pre-alfa. Licencia MIT.** No es un estándar universal ni existe evidencia de que una IA comprenda realmente a otra a través de este protocolo.
+**Estado real:** prototipo técnico reproducible. Todavía no es un estándar, no conecta con ChatGPT/Claude/Gemini, ni comprueba la veracidad de las fuentes o la identidad criptográfica de los agentes.
 
-[Documentación técnica en inglés](README.md)
+## ¿Qué intenta resolver?
 
-## Mejoras implementadas
+Que dos agentes IA intercambien objetivos, restricciones, hipótesis y referencias a evidencia mediante un contrato semántico conocido. Si no comparten un significado compatible, el intercambio debe fallar en lugar de fingir compatibilidad.
 
-- **Formato reproducible Python/Node.js:** JSON UTF-8 con claves ASCII, cadenas Unicode y enteros seguros; rechaza números de punto flotante, claves ambiguas y representaciones no canónicas. No es RFC 8785.
-- **Autenticación opcional HMAC-SHA256:** firma el mensaje junto con su metadato de validez temporal y vincula la clave a un emisor previamente confiado.
-- **Prevención de repetición persistente:** usa SQLite y transacciones para identificar mensajes repetidos incluso luego de reiniciar el proceso.
-- **Validación de evidencia:** verifica que los bytes entregados coincidan con un hash SHA-256. Esto no prueba la verdad del contenido.
-- **Pruebas:** se incluyen tests Python y Node, con casos negativos para alteraciones, vencimiento e identidad.
+## ¿Qué se puede probar hoy?
 
-## Cómo probar el repositorio
+- Negociación de versión, ontología y funciones entre dos agentes simulados.
+- Esquema JSON Schema estricto y comprobación de referencias entre afirmaciones y evidencias.
+- Acuse de recepción del objetivo y restricciones mediante hashes reproducibles en Python y Node.js para los casos de prueba.
+- Política local de autorización que no concede permisos a partir de lo escrito en el mensaje.
+- Conversión de los datos del protocolo al campo estructurado de A2A o al de resultados de herramientas MCP. **No es una integración completa de red con esos protocolos**.
+- 35 pruebas Python, 8 pruebas Node.js y un intercambio entre ambos entornos.
+
+## Uso
+
+Requiere Python 3.10+ y Node.js 22+ (Node solo para pruebas cruzadas).
 
 ```bash
+python -m pip install -e .
+python -m unittest discover -s tests -v
+python examples/demo.py
+node --test js/test.mjs
+node js/create-ack.mjs < fixtures/python-task.json > node-ack.json
+python examples/check_node_ack.py node-ack.json
+```
+
+Si no se pueden instalar dependencias por falta de Internet pero ya está instalado `jsonschema`, usar `PYTHONPATH=src` en los comandos Python (Linux/macOS). En PowerShell: `$env:PYTHONPATH='src'`.
+
+## Qué falta para conseguir una adopción real
+
+- Adaptadores completos, utilizando SDK oficiales de modelos y protocolos.
+- Identidad criptográfica, auditoría, validación de fuentes y controles operativos.
+- Compatibilidad semántica comprobada con distintas IA reales, no solo intercambios deterministas.
+- Pruebas de eficiencia y precisión contra los protocolos actuales.
+- Publicar en un repositorio independiente, discutir la especificación e incorporar contribuidores externos.
+
+El proyecto se distribuye con licencia MIT. Consultar [README.md](README.md), [especificación técnica](docs/SPEC.md) y [riesgos de seguridad](docs/SECURITY.md).
+
+## Novedades de seguridad v0.3.0
+
+- Firmas HMAC-SHA256 en Python y Node.js sobre JSON canónico restringido (no RFC 8785), vinculadas a la identidad confiada por el receptor.
+- Rechazo de mensajes alterados, vencidos o enviados con claves no reconocidas.
+- Registro SQLite para evitar repeticiones incluso después de reinicios.
+- Pruebas bidireccionales de firmas Python ↔ Node.js y contenido Unicode.
+- Verificación opcional del hash SHA-256 de bytes de evidencia aportados localmente.
+
+No hay conexión a IA comerciales, control de infraestructura ni prueba de comprensión semántica real. Firmar un mensaje no equivale a autorizar una acción.
+
+
+## Novedad 0.4: contratos semánticos ejecutables
+
+Dos agentes pueden intercambiar un contrato con condiciones **obligatorias**, **prohibidas** y resultados **desconocidos**. El sistema genera automáticamente situaciones contrafácticas; otro agente debe clasificar cada caso como `satisfied`, `violated` o `incomplete`. Se comprueban identificadores, nonce y huella del contrato. **No equivale a demostrar comprensión cognitiva**.
+
+También se incorporó un grafo de evidencias con vínculos de apoyo, refutación y dependencia. Detecta ciclos, referencias inexistentes y contradicciones potenciales. Una fuente externa debe corroborar la evidencia: declararla `fact` no la convierte en verdadera.
+
+### Pruebas
+
+```bash
+python -m pip install -e .
 python -m unittest discover -s tests -v
 node --test js/*.test.mjs
 ```
 
-**Alcance de GitHub:** implementación autónoma reducida. El paquete ampliado v0.3.0 desarrollado durante la investigación contiene un SDK Python con JSON Schema y más pruebas; por ahora ambos no son distribuciones idénticas.
-
-**Limitaciones:** no conecta modelos comerciales, no opera sistemas, no valida la procedencia real de las fuentes y no reemplaza A2A, MCP, TLS ni OAuth. La firma no concede permisos: la autorización depende del sistema receptor.
-
-## Próxima investigación
-
-Importar al repositorio toda la versión ampliada, completar pruebas cruzadas de conformidad, integrar agentes reales usando sus APIs, medir errores semánticos, establecer revisión independiente y gobernanza abierta.
+Más detalles en [la especificación semántica](docs/SEMANTIC_CONFORMANCE.md).

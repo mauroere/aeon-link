@@ -1,0 +1,49 @@
+{
+  "envelope": {
+    "protocol": "aeon-link",
+    "version": "0.4.0",
+    "ontology": "urn:aeon-link:ontology:core:0.4.0",
+    "message_id": "00000000-0000-4000-8000-000000000001",
+    "kind": "task",
+    "sender": "agent-alpha",
+    "recipient": "agent-beta",
+    "body": {
+      "objective": {
+        "id": "cross-001",
+        "text": "List what is unknown about an outage",
+        "success_criteria": [
+          "Identify missing tests"
+        ]
+      },
+      "constraints": {
+        "read_only": true,
+        "max_risk": "low"
+      },
+      "action": "observe",
+      "claims": [
+        {
+          "id": "c1",
+          "status": "fact",
+          "text": "DNS resolved at least once",
+          "evidence_ids": [
+            "e1"
+          ]
+        },
+        {
+          "id": "h1",
+          "status": "hypothesis",
+          "text": "Routing issue",
+          "evidence_ids": []
+        }
+      ],
+      "evidence": [
+        {
+          "id": "e1",
+          "source_uri": "urn:example:dns:001"
+        }
+      ]
+    }
+  },
+  "objective_digest": "5f4a60a3f06e747c397fd960a6e39e567e1ead784f68d11794ce5454d5f8cb20",
+  "constraints_digest": "03cf19951a475113409b696d74e15eba9e902b42e639065af21ac0a8e64790bb"
+}

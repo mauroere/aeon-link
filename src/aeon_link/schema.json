@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:aeon-link:schema:envelope:0.4.0",
+  "title": "AEON-Link envelope — experimental 0.4.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "version", "ontology", "message_id", "kind", "sender", "recipient", "body"],
+  "properties": {
+    "protocol": {"const": "aeon-link"},
+    "version": {"const": "0.4.0"},
+    "ontology": {"const": "urn:aeon-link:ontology:core:0.4.0"},
+    "message_id": {"type": "string", "format": "uuid"},
+    "kind": {"enum": ["hello", "task", "result", "error"]},
+    "sender": {"type": "string", "minLength": 1, "maxLength": 256},
+    "recipient": {"type": "string", "minLength": 1, "maxLength": 256},
+    "body": {"type": "object"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source_uri"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "source_uri": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "observed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "status", "text", "evidence_ids"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["fact", "hypothesis", "unknown"]},
+        "text": {"type": "string", "minLength": 1},
+        "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "fact"}}, "required": ["status"]},
+         "then": {"properties": {"evidence_ids": {"minItems": 1}}}}
+      ]
+    },
+    "hello": {
+      "type": "object", "additionalProperties": false,
+      "required": ["versions", "ontologies", "features"],
+      "properties": {
+        "versions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "ontologies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "task": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objective", "constraints", "action", "claims", "evidence"],
+      "properties": {
+        "objective": {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "text", "success_criteria"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "text": {"type": "string", "minLength": 1},
+            "success_criteria": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          }
+        },
+        "constraints": {
+          "type": "object", "additionalProperties": false,
+          "required": ["read_only"],
+          "properties": {
+            "read_only": {"type": "boolean"},
+            "max_risk": {"enum": ["low", "medium", "high"]}
+          }
+        },
+        "action": {"enum": ["observe", "propose", "write", "execute"]},
+        "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["in_reply_to", "objective_id", "objective_digest", "constraints_digest", "status", "understood_objective", "findings", "uncertainties", "actions_executed"],
+      "properties": {
+        "in_reply_to": {"type": "string", "format": "uuid"},
+        "objective_id": {"type": "string", "minLength": 1},
+        "objective_digest": {"$ref": "#/$defs/digest"},
+        "constraints_digest": {"$ref": "#/$defs/digest"},
+        "status": {"enum": ["completed", "rejected", "needs_clarification"]},
+        "understood_objective": {"type": "string", "minLength": 1},
+        "findings": {"type": "array", "items": {"type": "string"}},
+        "uncertainties": {"type": "array", "items": {"type": "string"}},
+        "actions_executed": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1},
+        "in_reply_to": {"type": "string", "format": "uuid"}
+      }
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"kind": {"const": "hello"}}}, "then": {"properties": {"body": {"$ref": "#/$defs/hello"}}}},
+    {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"properties": {"body": {"$ref": "#/$defs/task"}}}},
+    {"if": {"properties": {"kind": {"const": "result"}}}, "then": {"properties": {"body": {"$ref": "#/$defs/result"}}}},
+    {"if": {"properties": {"kind": {"const": "error"}}}, "then": {"properties": {"body": {"$ref": "#/$defs/error"}}}}
+  ]
+}
