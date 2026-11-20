@@ -54,3 +54,7 @@ python examples/preregistered_research.py live --provider openai --model YOUR_EN
 ## Honest status
 
 The reference oracle being correct is not evidence the tested LLMs are correct. An all-perfect *mock* establishes only harness determinism. Until actual calls, independent adjudication, and replication happen, superiority is **NOT DEMONSTRATED**.
+
+## Opt-in GitHub Actions pilot
+
+A manual workflow at `.github/workflows/manual-model-pilot.yml` runs only when the operator selects **yes** for paid calls and supplies a provider/model ID. It requires the matching GitHub repository secret, caps requests at 12 cases × three presentations = 36 paid calls, and publishes only the synthetic measurement report as a short-lived private Actions artifact (public repo permissions may expose artifacts to repository readers; do not use sensitive inputs). It does not automatically run on commits or pull requests. It is a *pilot*, not a full held-out evaluation.
