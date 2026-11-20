@@ -2,7 +2,7 @@
 
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange)](#status) 
 
-**SDK release: 0.5.0 (wire protocol: 0.4.0; proof of concept).** This is **not** an adopted industry standard, does **not** connect to real LLM APIs, and does **not** independently authenticate agents or verify the truth of sources. It is a proposal and runnable SDK for semantically tagged messages between different agent systems.
+**Current release: 0.4.0 (proof of concept).** This is **not** an adopted industry standard, does **not** connect to real LLM APIs, and does **not** independently authenticate agents or verify the truth of sources. It is a proposal and runnable SDK for semantically tagged messages between different agent systems.
 
 **Positioning:** AEON-Link is an optional *semantic payload layer*. It is designed to sit **on top of** existing agent protocols; it does not replace A2A, MCP, HTTP, OAuth, or provider SDKs.
 
@@ -170,3 +170,17 @@ See [inbound security](docs/INBOUND_SECURITY.md) and
 **Protocol wire version:** 0.4.0 · **SDK version:** 0.5.0. The canonical
 profile rejects prototype-reserved object keys that were previously allowed;
 implementations must fail closed rather than silently reinterpret data.
+
+## SDK 0.6.0 — verifiable progress toward independent assessment
+
+The wire envelope remains `0.4.0`. Version 0.6.0 adds **optional** official-API HTTP adapters for OpenAI Responses, Anthropic Messages and Gemini generateContent, a deliberately opt-in **paid live paired evaluation** harness, GitHub CodeQL automated security workflow, Dependabot configuration, vulnerability-reporting instructions and an external-assessor checklist. No API keys or model connections were available during this implementation: provider responses were mocked in the tests, **not run live**. CodeQL is an external scanner, **not** a completed human independent audit.
+
+Additional fix: Python's SQLite replay guard now closes its database connection after initialization. HTTP adapters use fixed HTTPS origins, reject redirects, bound messages and avoid logging provider error bodies or API keys.
+
+```bash
+python -m unittest discover -s tests -v
+node --test js/*.test.mjs js/test.mjs
+python examples/live_provider_benchmark.py --help
+```
+
+See [status and adoption ledger](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) and [security reporting](SECURITY.md). A2A and MCP are not alternatives to AEON-Link payloads; benchmark the **same protocol with and without** the enriched semantic payload, not these different layers against one another.
