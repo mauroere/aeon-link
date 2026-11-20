@@ -27,6 +27,36 @@ class ProtocolError(ValueError):
 
 from .canonical import canonical_bytes, digest, CanonicalizationError
 
+from datetime import date
+
+_RFC3339 = re.compile(
+    r"^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?([Zz]|[+-]\d{2}:\d{2})$"
+)
+
+def _valid_observed_at(value: object) -> bool:
+    """Stable strict RFC3339 subset independent of optional jsonschema extras.
+
+    Fractional seconds supported; leap second 60 intentionally rejected.
+    This validator never uses system timezone, wall clock or external packages.
+    """
+    if not isinstance(value, str):
+        return False
+    m = _RFC3339.fullmatch(value)
+    if m is None:
+        return False
+    year, month, day, hour, minute, second = map(int, m.groups()[:6])
+    if year < 1 or hour > 23 or minute > 59 or second > 59:
+        return False
+    try:
+        date(year, month, day)
+    except ValueError:
+        return False
+    zone = m.group(7)
+    if len(zone) == 6 and (int(zone[1:3]) > 23 or int(zone[4:6]) > 59):
+        return False
+    return True
+
+
 
 def validate_envelope(envelope: dict) -> dict:
     """Validate JSON shape and limited *referential* invariants; not truth or authenticity."""
@@ -43,6 +73,9 @@ def validate_envelope(envelope: dict) -> dict:
         claim_ids = [c["id"] for c in body["claims"]]
         if len(ev_ids) != len(set(ev_ids)) or len(claim_ids) != len(set(claim_ids)):
             raise ProtocolError("Evidence and claim IDs must be unique within the task")
+        for evidence in body["evidence"]:
+            if "observed_at" in evidence and not _valid_observed_at(evidence["observed_at"]):
+                raise ProtocolError("Invalid date-time: observed_at")
         known = set(ev_ids)
         for claim in body["claims"]:
             if any(eid not in known for eid in claim["evidence_ids"]):

@@ -15,6 +15,8 @@ provide a **receiver-side validation gate**, not a sandbox or IAM system.
 Python's SQLiteReplayGuard uses a transactional unique key across process restarts.
 Node's `receiveSigned` is **async** and awaits a host-supplied
 `replayGuard.checkAndRecord(sender, messageId, expiresAt, now)`; the host
+**MUST** return `true` only after atomic, durable insertion; reject duplicates
+with an exception or `false`. A missing/undefined return is rejected. The host
 **MUST** implement durable atomicity across processes. An in-memory Set in
 unit tests is NOT suitable for production.
 
@@ -43,3 +45,8 @@ The SDK release is 0.5.0 and the envelope still uses the unchanged **0.4.0**
 version and ontology. Existing v0.4 canonical payloads with reserved JS prototype
 keys are now rejected, a deliberate security hardening incompatible with that
 small input subset. Treat this as a profile restriction and fail closed.
+
+The task validator independently verifies evidence timestamps in Python and
+Node (valid calendar dates, valid clock and UTC offsets); optional JSON Schema
+format-checking packages cannot silently relax this rule. Leap seconds are
+not accepted by this deliberately strict subset.

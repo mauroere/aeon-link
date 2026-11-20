@@ -1,6 +1,8 @@
+> Current security boundary: [INBOUND_SECURITY.md](INBOUND_SECURITY.md). The following is retained for historical context; some threats now have optional mitigations.
+
 # Security model (experimental)
 
-## Threats explicitly NOT mitigated in 0.2.0
+## Historical 0.2.0 threat model (not current SDK 0.5.0)
 
 - Impersonated agents or replay across processes. `sender` and `message_id` are strings; no signature or authenticated channel is implemented.
 - Fabricated evidence. A `source_uri` or `sha256` property is not independently verified.

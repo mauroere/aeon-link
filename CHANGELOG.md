@@ -36,7 +36,7 @@
 ## SDK 0.5.0 (experimental; wire profile remains 0.4.0)
 
 - Add receiver-side authenticated, recipient-bound and policy-bound ingress
-  with durable Python replay registration and awaited host-provided Node replay.
+  with durable Python replay registration and awaited host-provided Node replay (explicit success confirmation required).
 - Refuse non-plain Node objects, accessors, sparse arrays, negative zero, and
   reserved prototype-property keys in canonical JSON; mirror reserved keys in
   Python to preserve parity.
@@ -47,3 +47,6 @@
 - Validate 400 randomized canonical encodings, 121 paired validator cases and
   seven cross-language decision receipts, in addition to unit test suites.
 - Add explicit documentation of semantic and operational security gaps.
+
+- Fix environment-dependent RFC3339 handling: Python now validates dates
+  with a built-in strict parser instead of relying on optional jsonschema extras.

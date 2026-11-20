@@ -16,7 +16,7 @@ function cfg(){
          policy:{verifiedSender:'alpha',allowedActions:['observe']},now:1700000001,
          replayGuard:{checkAndRecord:(sender,id,expiry,now)=>{
             if(expiry<now)throw new Error('expired');
-            const token=sender+'|'+id;if(seen.has(token))throw new Error('duplicate');seen.add(token);
+            const token=sender+'|'+id;if(seen.has(token))throw new Error('duplicate');seen.add(token);return true;
          }}};
 }
 test('accept authentic authorized message',async()=>{
@@ -50,3 +50,18 @@ test('reject objects that only appear empty',()=>assert.throws(()=>canonicalByte
 test('reject non-JSON sparse arrays',()=>assert.throws(()=>canonicalBytes([,1]),/Sparse/));
 test('reject prototype pollution keys',()=>assert.throws(()=>canonicalBytes(JSON.parse('{"__proto__":0}')),/safe ASCII/));
 test('reject negative zero',()=>assert.throws(()=>canonicalBytes({x:-0}),/safe JSON integer/));
+
+test('deny replay guard silent false response',async()=>{
+ const options=cfg();options.replayGuard={checkAndRecord:async()=>false};
+ await assert.rejects(()=>receiveSigned(fixture(),options),/did not confirm/);
+});
+test('deny replay guard silent undefined response',async()=>{
+ const options=cfg();options.replayGuard={checkAndRecord:async()=>undefined};
+ await assert.rejects(()=>receiveSigned(fixture(),options),/did not confirm/);
+});
+test('await remote replay store completion',async()=>{
+ let completed=false;const options=cfg();
+ options.replayGuard={checkAndRecord:async()=>{await Promise.resolve();completed=true;return true;}};
+ const receipt=await receiveSigned(fixture(),options);
+ assert.equal(completed,true);assert.equal(receipt.replayRecorded,true);
+});

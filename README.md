@@ -2,7 +2,7 @@
 
 [![Status: experimental](https://img.shields.io/badge/status-experimental-orange)](#status) 
 
-**Current release: 0.4.0 (proof of concept).** This is **not** an adopted industry standard, does **not** connect to real LLM APIs, and does **not** independently authenticate agents or verify the truth of sources. It is a proposal and runnable SDK for semantically tagged messages between different agent systems.
+**SDK release: 0.5.0 (wire protocol: 0.4.0; proof of concept).** This is **not** an adopted industry standard, does **not** connect to real LLM APIs, and does **not** independently authenticate agents or verify the truth of sources. It is a proposal and runnable SDK for semantically tagged messages between different agent systems.
 
 **Positioning:** AEON-Link is an optional *semantic payload layer*. It is designed to sit **on top of** existing agent protocols; it does not replace A2A, MCP, HTTP, OAuth, or provider SDKs.
 

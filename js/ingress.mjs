@@ -12,7 +12,8 @@ const isObj = x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
  * @param {Buffer} raw canonical UTF-8 signed wrapper
  * @param {object} cfg trustedKeys, localRecipient, policy, replayGuard, now
  * await replayGuard.checkAndRecord(verifiedSender, messageId, expiresAt, now)
- * must be atomic and durable across all processes executing side effects.
+ * must be atomic and durable across all processes executing side effects,
+ * must return boolean true for confirmed insertion and throw or return false on duplicate.
  */
 export async function receiveSigned(raw,{trustedKeys,localRecipient,policy=null,replayGuard,now=Math.floor(Date.now()/1000)}) {
   if(!Buffer.isBuffer(raw))fail('Canonical Buffer required');
@@ -29,7 +30,8 @@ export async function receiveSigned(raw,{trustedKeys,localRecipient,policy=null,
     if(!policy.allowedActions.includes(envelope.body.action))fail('Task action denied by local policy');
   }
   // A replay guard throws to reject duplicate or expired messages.
-  await replayGuard.checkAndRecord(verified.verifiedSender,envelope.message_id,verified.expiresAt,now);
+  const replayAccepted = await replayGuard.checkAndRecord(verified.verifiedSender,envelope.message_id,verified.expiresAt,now);
+  if (replayAccepted !== true) fail('Replay store did not confirm atomic registration');
   return {envelope:structuredClone(envelope),verifiedSender:verified.verifiedSender,
           recipient:localRecipient,messageId:envelope.message_id,keyId:verified.keyId,
           expiresAt:verified.expiresAt,replayRecorded:true};
