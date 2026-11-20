@@ -20,8 +20,8 @@ on:
         description: Explicitly authorize paid API requests
         required: true
         type: choice
-        options: [no, yes]
-        default: no
+        options: ['no', 'yes']
+        default: 'no'
 permissions:
   contents: read
 jobs:
