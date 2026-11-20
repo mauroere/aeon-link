@@ -1,20 +1,28 @@
-# ÆON-Link — Protocolo semántico experimental entre agentes
+# ÆON-Link v0.3.0 — Comunicación semántica entre inteligencias artificiales
 
-Este repositorio contiene una implementación mínima en Python del intercambio de objetivos, estados epistémicos, referencias a evidencias, negociación de capacidades y autorización del receptor.
+**Estado: experimental, pre-alfa. Licencia MIT.** No es un estándar universal ni existe evidencia de que una IA comprenda realmente a otra a través de este protocolo.
 
-**Estado:** prototipo. No se comprobó comprensión semántica entre modelos de IA reales. Las referencias de evidencia no prueban que una fuente sea verdadera. La política local requiere autenticación externa. Los hashes no prueban comprensión.
+[Documentación técnica en inglés](README.md)
 
-## Prueba rápida
+## Mejoras implementadas
+
+- **Formato reproducible Python/Node.js:** JSON UTF-8 con claves ASCII, cadenas Unicode y enteros seguros; rechaza números de punto flotante, claves ambiguas y representaciones no canónicas. No es RFC 8785.
+- **Autenticación opcional HMAC-SHA256:** firma el mensaje junto con su metadato de validez temporal y vincula la clave a un emisor previamente confiado.
+- **Prevención de repetición persistente:** usa SQLite y transacciones para identificar mensajes repetidos incluso luego de reiniciar el proceso.
+- **Validación de evidencia:** verifica que los bytes entregados coincidan con un hash SHA-256. Esto no prueba la verdad del contenido.
+- **Pruebas:** se incluyen tests Python y Node, con casos negativos para alteraciones, vencimiento e identidad.
+
+## Cómo probar el repositorio
+
 ```bash
 python -m unittest discover -s tests -v
+node --test js/*.test.mjs
 ```
 
-La versión extendida v0.2.0 con SDK Python, Node.js, especificación y pruebas cruzadas se proporciona también como paquete ZIP en la conversación donde se desarrolló. Esta publicación inicial contiene una implementación de referencia reducida, no todo el paquete extendido.
+**Alcance de GitHub:** implementación autónoma reducida. El paquete ampliado v0.3.0 desarrollado durante la investigación contiene un SDK Python con JSON Schema y más pruebas; por ahora ambos no son distribuciones idénticas.
 
-## Objetivos
-1. Contrato formal de intercambio entre agentes.
-2. Adopción como capa semántica opcional encima de A2A/MCP.
-3. Pruebas con múltiples proveedores de IA.
-4. Seguridad, autoría, procedencia verificable y benchmarks independientes.
+**Limitaciones:** no conecta modelos comerciales, no opera sistemas, no valida la procedencia real de las fuentes y no reemplaza A2A, MCP, TLS ni OAuth. La firma no concede permisos: la autorización depende del sistema receptor.
 
-Licencia MIT.
+## Próxima investigación
+
+Importar al repositorio toda la versión ampliada, completar pruebas cruzadas de conformidad, integrar agentes reales usando sus APIs, medir errores semánticos, establecer revisión independiente y gobernanza abierta.
