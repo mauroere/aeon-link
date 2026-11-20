@@ -37,3 +37,7 @@ Sources:
 - MCP 2026-07-28: https://modelcontextprotocol.io/specification/2026-07-28
 - GitHub CodeQL: https://docs.github.com/en/code-security/concepts/code-scanning/codeql/codeql-code-scanning
 - API references: https://developers.openai.com/api/reference/resources/responses/methods/create , https://platform.claude.com/docs/en/api/messages , https://ai.google.dev/api/generate-content
+
+### Two-model relay (distinct from paired format evaluation)
+
+`examples/live_model_relay.py` asks model A to reproduce a fixed read-only objective, validates that it was copied exactly, then asks model B whether a separate `read`, `write` or `execute` request is allowed. It records only the validated result and latency, not the raw provider text. It has no tool executor and cannot change a remote system. Without both provider credentials and `--i-accept-api-costs`, there is no real provider-to-provider call. The included automated tests use mocked API results only.
