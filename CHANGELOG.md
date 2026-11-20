@@ -56,3 +56,4 @@
 - Added CodeQL static analysis, Dependabot weekly checks, external-assessor review scope, and private vulnerability-disclosure guidance.
 - Documented honest status of human independent audit, commercial API interoperability, paired comparisons and adoption.
 - No wire-format change; remains 0.4.0.
+- Added explicit opt-in two-commercial-model relay with a fail-closed semantic translation check, no action execution and mocked tests.
