@@ -16,7 +16,7 @@ from typing import Any
 from .semantics import PROFILE, evaluate_contract
 from .providers import ask_model, ProviderError
 
-VERSION = 'aeon.research.eval/0.1'
+VERSION = 'aeon.research.eval/0.2'
 METHODS = ('natural', 'structured-json', 'aeon-semantic')
 SPLITS = ('pilot', 'evaluation')
 SEED = 20261120
@@ -62,8 +62,21 @@ def make_cases(*, seed:int=SEED, cases_per_domain:int=60) -> dict:
     cases=[]
     for d,(domain,baseline,spec,usual_action) in enumerate(DOMAINS):
         for n in range(cases_per_domain):
-            contract=_contract(domain,spec)
-            state=dict(baseline)
+            # Vary both an actual numeric observation and its matching policy
+            # threshold. Merely changing observation IDs would not generate
+            # new decision-relevant scenarios and would inflate apparent sample
+            # diversity. Each n//5 tranche shifts a realistic numeric policy.
+            variant = (n // 5) * 2
+            adjusted_spec = list(spec)
+            numeric_index = next(i for i, (_, op, _) in enumerate(spec)
+                                 if op in ('gte', 'lte', 'gt', 'lt'))
+            numeric_name, numeric_op, numeric_threshold = spec[numeric_index]
+            adjusted_spec[numeric_index] = (numeric_name, numeric_op,
+                                            numeric_threshold + variant)
+            domain_baseline = dict(baseline)
+            domain_baseline[numeric_name] += variant
+            contract = _contract(domain, adjusted_spec)
+            state = dict(domain_baseline)
             complexity='extended' if n%2==0 else 'basic'
             if complexity=='extended':
                 state['meta']={'region':'authorized','retry':1,'override':False}
@@ -75,12 +88,12 @@ def make_cases(*, seed:int=SEED, cases_per_domain:int=60) -> dict:
             scenario=n%5
             if scenario==1:
                 # Explicit rule violation with otherwise legitimate action.
-                name,op,_=spec[n%3]
-                state[name]=_flip(baseline[name],op)
-                if state[name]==baseline[name]:state[name]='__other__'
+                name,op,_=adjusted_spec[n%3]
+                state[name]=_flip(domain_baseline[name],op)
+                if state[name]==domain_baseline[name]:state[name]='__other__'
             elif scenario==2:
                 # Omitted data generates incomplete decision if nothing else violates.
-                name,_,_=spec[n%3]
+                name,_,_=adjusted_spec[n%3]
                 state.pop(name)
             elif scenario==3:
                 # Forbidden action must fail, even when other evidence is missing.
@@ -95,16 +108,122 @@ def make_cases(*, seed:int=SEED, cases_per_domain:int=60) -> dict:
             expected=evaluate_contract(contract,state,action)['status']
             cases.append({'case_id':f'{domain}-{n:04d}', 'domain':domain,
                           'contract':contract,'state':state,'action':action,'complexity':complexity,'expected':expected})
+    # Split by LOGICAL scenario family rather than by row. Previously, many
+    # near-identical states appeared in both pilot and evaluation. Decoy note
+    # text and observation IDs do not change the formal decision, so neither
+    # may be used to separate a logical scenario group across splits.
     rng.shuffle(cases)
-    # Every domain has >=60% held-out cases; deterministic public split, not independent.
-    pilot=[]; evaluation=[]
-    seen=Counter()
-    for case in cases:
-        bucket='pilot' if seen[case['domain']]%5<2 else 'evaluation'
-        (pilot if bucket=='pilot' else evaluation).append(case)
-        seen[case['domain']]+=1
-    return {'schema':VERSION,'seed':seed,'generator_version':1,
-            'splits':{'pilot':pilot,'evaluation':evaluation}}
+    pilot, evaluation = [], []
+    for domain, _, _, _ in DOMAINS:
+        domain_cases = [x for x in cases if x['domain'] == domain]
+        groups: dict[str, list[dict]] = defaultdict(list)
+        for c in domain_cases:
+            groups[logical_signature(c)].append(c)
+        clusters = sorted(groups.values(), key=lambda xs: logical_signature(xs[0]))
+        rng.shuffle(clusters)
+        # Every cluster has the same oracle label. Select whole clusters,
+        # stratifying by outcome to prevent spurious method differences from
+        # different base rates across pilot and evaluation.
+        target_total = cases_per_domain * 2 // 5
+        group_labels = ('satisfied', 'violated', 'incomplete')
+        by_label = {label: [(i, rows) for i, rows in enumerate(clusters)
+                            if rows[0]['expected'] == label]
+                    for label in group_labels}
+
+        def choose_exact(group_list, target):
+            options = {0: ()}
+            for index, rows in group_list:
+                for subtotal, chosen_indices in list(options.items()):
+                    total = subtotal + len(rows)
+                    if total <= target and total not in options:
+                        options[total] = chosen_indices + (index,)
+            return options.get(target)
+
+        total_labels = Counter(x['expected'] for x in domain_cases)
+        target_labels = {label: round(total_labels[label] * 2 / 5)
+                         for label in group_labels}
+        best = None
+        # Small search over plausible integer target counts; each candidate
+        # requires exact reachable sums of whole logical scenario clusters.
+        for satisfied in range(1, target_total - 1):
+            for violated in range(1, target_total - satisfied):
+                incomplete = target_total - satisfied - violated
+                candidates = {'satisfied': satisfied, 'violated': violated,
+                              'incomplete': incomplete}
+                chosen_parts = [choose_exact(by_label[label], candidates[label])
+                                for label in group_labels]
+                if any(part is None for part in chosen_parts):
+                    continue
+                selected = set(i for part in chosen_parts for i in part)
+                pilot_rows = [x for i in selected for x in clusters[i]]
+                eval_rows = [x for i in range(len(clusters)) if i not in selected for x in clusters[i]]
+                if {x['complexity'] for x in pilot_rows} != {'basic', 'extended'}:
+                    continue
+                if {x['complexity'] for x in eval_rows} != {'basic', 'extended'}:
+                    continue
+                imbalance = sum(abs(candidates[label] - target_labels[label])
+                                for label in group_labels)
+                score = (imbalance, abs(sum(x['complexity'] == 'extended'
+                                            for x in pilot_rows) - target_total / 2))
+                if best is None or score < best[0]:
+                    best = (score, selected)
+        if best is None:
+            raise ValueError('Cannot form disjoint, label-diverse stratified split')
+        chosen = best[1]
+        for i, rows in enumerate(clusters):
+            (pilot if i in chosen else evaluation).extend(rows)
+    rng.shuffle(pilot)
+    rng.shuffle(evaluation)
+    result = {'schema': VERSION, 'seed': seed, 'generator_version': 2,
+              'splits': {'pilot': pilot, 'evaluation': evaluation}}
+    assert_split_integrity(result)
+    return result
+
+
+def logical_signature(case: dict) -> str:
+    """Group cases with identical decision-relevant facts and policy.
+
+    Both comment (untrusted user content) and observation_id are deliberately
+    excluded. This is an experiment-specific logical equivalence, not a
+    universal semantic equivalence algorithm.
+    """
+    state = {k: v for k, v in case['state'].items()
+             if k not in ('observation_id', 'comment')}
+    return hashlib.sha256(json.dumps({
+        'domain': case['domain'], 'contract': case['contract'],
+        'action': case['action'], 'state': state
+    }, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode('utf-8')).hexdigest()
+
+
+def assert_split_integrity(corpus: dict) -> dict:
+    """Require non-overlapping logical scenarios across both public splits."""
+    if not isinstance(corpus, dict) or corpus.get('schema') != VERSION:
+        raise ValueError('Wrong dataset schema')
+    splits = corpus.get('splits')
+    if not isinstance(splits, dict) or set(splits) != set(SPLITS):
+        raise ValueError('Wrong split structure')
+    all_ids, keys = set(), {}
+    for split in SPLITS:
+        cases = splits[split]
+        if not isinstance(cases, list) or not cases:
+            raise ValueError('Missing split')
+        keys[split] = set()
+        for case in cases:
+            if not isinstance(case, dict) or case.get('expected') != evaluate_contract(
+                    case['contract'], case['state'], case['action'])['status']:
+                raise ValueError('Incorrect oracle result')
+            cid = case['case_id']
+            if not isinstance(cid, str) or cid in all_ids:
+                raise ValueError('Duplicate/invalid case ID')
+            all_ids.add(cid)
+            keys[split].add(logical_signature(case))
+    overlap = keys['pilot'] & keys['evaluation']
+    if overlap:
+        raise ValueError(f'Pilot/evaluation contamination: {len(overlap)} logical groups overlap')
+    return {'logical_groups_pilot': len(keys['pilot']),
+            'logical_groups_evaluation': len(keys['evaluation']),
+            'cross_split_overlap': 0,
+            'rows': len(all_ids)}
 
 
 def dataset_digest(corpus:dict) ->str:
@@ -187,6 +306,22 @@ def _paired_ci(diffs:list[int],seed:int=8712,iterations:int=2000,alpha:float=.02
     return [round(values[int(iterations*alpha/2)],4),round(values[min(iterations-1,int(iterations*(1-alpha/2)))],4)]
 
 
+def _domain_cluster_ci(group_diffs: dict[str, list[int]], seed: int = 8712,
+                       iterations: int = 4000) -> list[float]:
+    """Resample domains (not rows); conservative diagnostic, only six clusters."""
+    groups = [group_diffs[k] for k in sorted(group_diffs)]
+    if not groups:
+        raise ValueError('No domains')
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(iterations):
+        sampled = [groups[rng.randrange(len(groups))] for _ in groups]
+        estimates.append(sum(map(sum, sampled)) / sum(map(len, sampled)))
+    estimates.sort()
+    return [round(100 * estimates[int(iterations * 0.0125)], 2),
+            round(100 * estimates[min(iterations - 1, int(iterations * 0.9875))], 2)]
+
+
 def score_records(corpus:dict, observations:list[dict],*,split:str='pilot')->dict:
     """Strict paired benchmark; excludes no failed API responses (they count incorrect).
 
@@ -195,6 +330,8 @@ def score_records(corpus:dict, observations:list[dict],*,split:str='pilot')->dic
     """
     if split not in SPLITS or corpus.get('schema')!=VERSION:raise ValueError('Invalid corpus/split')
     cases=corpus['splits'][split]
+    if all(corpus['splits'].get(s) for s in SPLITS):
+        assert_split_integrity(corpus)
     for case in cases:
         if case.get('expected')!=evaluate_contract(case['contract'],case['state'],case['action'])['status']:
             raise ValueError('Oracle label mismatch')
@@ -214,6 +351,9 @@ def score_records(corpus:dict, observations:list[dict],*,split:str='pilot')->dic
                 (row['total_tokens'] is None or type(row['total_tokens']) is int and row['total_tokens']>=0)):
             raise ValueError('Invalid latency/token values')
         rows[cid,method]=row
+    logical_groups = defaultdict(list)
+    for c in cases:
+        logical_groups[logical_signature(c)].append(c)
     methods={}
     for method in METHODS:
         by=[rows[c['case_id'],method] for c in cases]
@@ -223,20 +363,37 @@ def score_records(corpus:dict, observations:list[dict],*,split:str='pilot')->dic
         methods[method]={'correct':hits,'accuracy':round(hits/len(cases),4),
                         'errors':sum(r['predicted']=='error' for r in by),
                         'mean_tokens':round(sum(tokens)/len(tokens),2) if len(tokens)==len(cases) else None,
-                        'mean_latency_ms':round(sum(lat)/len(lat),2) if len(lat)==len(cases) else None}
+                        'mean_latency_ms':round(sum(lat)/len(lat),2) if len(lat)==len(cases) else None,
+                        'logical_group_balanced_accuracy': round(
+                            sum(sum(rows[c['case_id'],method]['predicted'] == c['expected']
+                                    for c in group)/len(group)
+                                for group in logical_groups.values())/len(logical_groups), 4)}
     pairs={}
     for base in METHODS[:2]:
         diffs=[];win=loss=0
+        domain_diffs: dict[str, list[int]] = defaultdict(list)
         for c in cases:
             cid=c['case_id'];right=c['expected']
             a=rows[cid,'aeon-semantic']['predicted']==right
             b=rows[cid,base]['predicted']==right
             diffs.append(int(a)-int(b))
+            domain_diffs[c['domain']].append(int(a)-int(b))
             win+=int(a and not b);loss+=int(b and not a)
+        group_balanced_diff = sum(
+            sum((int(rows[c['case_id'],'aeon-semantic']['predicted']==c['expected'])
+                 - int(rows[c['case_id'],base]['predicted']==c['expected']))
+                for c in group)/len(group)
+            for group in logical_groups.values())/len(logical_groups)
         pairs[base]={'aeon_only_correct':win,'baseline_only_correct':loss,
                      'difference_pp':round(100*sum(diffs)/len(diffs),2),
+                     'logical_group_balanced_difference_pp':round(100*group_balanced_diff,2),
                      'paired_bootstrap_ci_97_5_pp':[round(100*x,2) for x in _paired_ci(diffs)],
-                     'mcnemar_exact_p':round(_binom_two_sided(win+loss,win),6)}
+                     'mcnemar_exact_p':round(_binom_two_sided(win+loss,win),6),
+                     'cluster_bootstrap_97_5_pp': _domain_cluster_ci(domain_diffs),
+                     'domain_advantages_pp': {d: round(100*sum(v)/len(v), 2)
+                                              for d,v in sorted(domain_diffs.items())},
+                     'domain_cluster_count': len(domain_diffs),
+                     'cluster_inference_warning': 'Only six template families; case-level p-values are not evidence of independent generalization.'}
     domains={}
     for domain in sorted({c['domain'] for c in cases}):
         subset=[c for c in cases if c['domain']==domain]
@@ -247,9 +404,9 @@ def score_records(corpus:dict, observations:list[dict],*,split:str='pilot')->dic
                         ('untrusted_note',[c for c in cases if 'comment' in c['state']])]:
         slices[name]={m:round(sum(rows[c['case_id'],m]['predicted']==c['expected'] for c in subset)/len(subset),4) for m in METHODS} if subset else {}
     return {'schema':'aeon.research.analysis/0.1','dataset_digest':dataset_digest(corpus),
-            'split':split,'paired_cases':len(cases),'methods':methods,'comparisons':pairs,'domain_accuracy':domains,'slice_accuracy':slices,
+            'split':split,'paired_cases':len(cases),'logical_groups':len(logical_groups),'methods':methods,'comparisons':pairs,'domain_accuracy':domains,'slice_accuracy':slices,
             'interpretation':('DESCRIPTIVE ONLY: paired data do not independently establish '
-              'causal superiority, semantic comprehension, transfer across models, or A2A/MCP comparison.')}
+              'causal superiority, semantic comprehension, transfer across models, or A2A/MCP comparison. ' 'Domain clusters are repeated synthetic templates, not independent real-world samples.')}
 
 
 def run_live(corpus:dict,provider:str,model:str,*,split='pilot',limit:int=5,
