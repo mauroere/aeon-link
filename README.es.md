@@ -82,3 +82,13 @@ compatibilidad. La auditoría descubrió once discrepancias Python/Node en
 **No significa que la IA comprenda realmente una intención ni que el proyecto
 sea superior a A2A o MCP.** Las pruebas son principalmente deterministas.
 Consultá `docs/INBOUND_SECURITY.md` y `docs/DECISION_RECEIPTS.md`.
+
+## SDK v0.6.0 — Seguridad externa e interoperabilidad real
+
+Se implementaron adaptadores **opcionales** para las APIs comerciales de OpenAI, Anthropic y Gemini, pruebas con respuestas simuladas y una herramienta para ensayos comparativos con dos formatos de mensajes. Las llamadas reales **no se ejecutaron** porque no hay claves API autorizadas disponibles. Requieren ejecutar expresamente `examples/live_provider_benchmark.py --i-accept-api-costs`; pueden ocasionar cargos.
+
+Se agregó CodeQL (análisis estático automatizado de GitHub), Dependabot y un modelo para solicitar una auditoría humana externa. **El análisis automatizado no equivale a una auditoría independiente concluida**. La adopción universal y la superioridad frente a soluciones existentes permanecen **sin demostrar**.
+
+Se corrigió una fuga de conexiones SQLite y se bloquearon las redirecciones HTTP de los adaptadores para evitar redirigir credenciales.
+
+[Estado y próximos experimentos](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) · [Política de vulnerabilidades](SECURITY.md)
