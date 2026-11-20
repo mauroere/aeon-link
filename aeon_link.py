@@ -1,19 +1,21 @@
-"""ÆON-Link 0.2 minimal reference: semantics, negotiation, local authorization.
+"""ÆON-Link 0.3 hardened reference reference: semantics, negotiation, local authorization.
 Experimental; does not connect LLMs or verify source truth.
 """
-import json, hashlib, uuid
+import json, uuid
 from dataclasses import dataclass
 
-VERSION="0.2.0"
-ONTOLOGY="urn:aeon-link:ontology:core:0.2.0"
+VERSION="0.3.0"
+ONTOLOGY="urn:aeon-link:ontology:core:0.3.0"
 FEATURES=frozenset({"claims.v1","evidence.refs.v1","objective.ack.v1"})
 
 class ProtocolError(ValueError): pass
 
-def digest(obj):
-    return hashlib.sha256(json.dumps(obj,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+from aeon_canonical import canonical_bytes, digest, CanonicalizationError
 
 def validate(msg):
+    try: canonical_bytes(msg)
+    except CanonicalizationError as exc: raise ProtocolError("Invalid canonical JSON: "+str(exc)) from exc
+    if not isinstance(msg,dict) or set(msg)!={"protocol","version","ontology","message_id","kind","sender","recipient","body"}:raise ProtocolError("Invalid envelope keys")
     if not isinstance(msg,dict) or msg.get("protocol")!="aeon-link" or msg.get("version")!=VERSION or msg.get("ontology")!=ONTOLOGY:
         raise ProtocolError("Unsupported protocol/version/ontology")
     if msg.get("kind") not in ("hello","task","result"): raise ProtocolError("Invalid kind")
