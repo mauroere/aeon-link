@@ -1,4 +1,4 @@
-"""Public interface for the experimental AEON-Link SDK 0.5.0 (wire 0.4.0)."""
+"""Public interface for the experimental AEON-Link SDK 0.7.0 (wire 0.4.0)."""
 from .core import (
     VERSION, ONTOLOGY, FEATURES, Agreement, LocalPolicy, ProtocolError,
     ReplayGuard, authorize_task, canonical_bytes, digest, hello, make_ack_result,

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aeon-link-experimental"
-version = "0.6.0"
+version = "0.7.0"
 description = "Experimental, transport-neutral semantic envelopes for agent interoperability"
 readme = "README.md"
 requires-python = ">=3.10"

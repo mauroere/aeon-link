@@ -1,3 +1,10 @@
+## 0.7.0 — preregistered three-method research harness
+- Six synthetic domains, 360 deterministic oracle-scored cases, split pilot/evaluation.
+- Distinct natural/JSON/AEON payloads and untrusted-note injection probes.
+- Strict paired scoring, exact McNemar p-values, 97.5% paired bootstrap CIs, domain accuracy.
+- Explicitly opted-in commercial provider runs; no real results claimed.
+- Pre-registered success/failure criteria and experiment limitations.
+
 # Changelog
 
 ## 0.4.0 (experimental)
@@ -56,4 +63,3 @@
 - Added CodeQL static analysis, Dependabot weekly checks, external-assessor review scope, and private vulnerability-disclosure guidance.
 - Documented honest status of human independent audit, commercial API interoperability, paired comparisons and adoption.
 - No wire-format change; remains 0.4.0.
-- Added explicit opt-in two-commercial-model relay with a fail-closed semantic translation check, no action execution and mocked tests.
