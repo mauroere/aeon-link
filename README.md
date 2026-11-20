@@ -196,3 +196,6 @@ python examples/preregistered_research.py live --provider openai --model YOUR_MO
 ```
 
 This does not silently call external APIs, and `--i-accept-api-costs` is always required for live trials.
+
+
+**Optional GitHub Actions pilot:** `Manual paid LLM pilot (opt-in only)` requires a preconfigured provider API secret and an explicit paid-call selection; max 12 cases (36 calls), no automatic trigger.
