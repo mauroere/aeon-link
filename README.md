@@ -197,5 +197,12 @@ python examples/preregistered_research.py live --provider openai --model YOUR_MO
 
 This does not silently call external APIs, and `--i-accept-api-costs` is always required for live trials.
 
+## v0.8.0: repaired benchmark holdout integrity
 
-**Optional GitHub Actions pilot:** `Manual paid LLM pilot (opt-in only)` requires a preconfigured provider API secret and an explicit paid-call selection; max 12 cases (36 calls), no automatic trigger.
+An audit of v0.7 found **65 logically equivalent groups shared between pilot and evaluation** once decoy observation IDs and untrusted notes were ignored. v0.8 assigns entire logical groups to one split; the new 360-row corpus has **114 pilot groups / 174 evaluation groups / zero overlap**. An explicit audit script and tests fail if contamination is reintroduced. The scorer adds logical-group-balanced results and domain-cluster bootstrap diagnostics; six domains cannot justify generalized statistical claims.
+
+```sh
+python examples/audit_research_corpus.py
+```
+
+[Prospective research protocol v0.8](docs/PREREGISTERED_EXPERIMENT.md) · [Archived v0.7 protocol](docs/PREREGISTERED_EXPERIMENT_V07_ARCHIVE.md). This correction occurred **before any commercial-model outcomes**; no improvement of actual IA-to-IA accuracy has been demonstrated.

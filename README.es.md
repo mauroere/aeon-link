@@ -103,5 +103,12 @@ python examples/preregistered_research.py generate --output aeon-research-corpus
 python examples/preregistered_research.py live --provider openai --model MODELO_HABILITADO --limit 5 --i-accept-api-costs
 ```
 
+## v0.8.0: corrección del conjunto de evaluación
 
-**Piloto opcional en GitHub:** en Actions existe `Manual paid LLM pilot (opt-in only)`, que requiere un secreto API configurado y una autorización explícita de consumo. Máximo 12 casos por ejecución; no se activa automáticamente.
+La auditoría detectó **65 grupos de escenarios lógicamente equivalentes compartidos** entre piloto y evaluación en v0.7, al ignorar identificadores y comentarios irrelevantes para la decisión. v0.8 separa los grupos completos: **114 grupos en piloto, 174 en evaluación y cero compartidos**. La nueva prueba automática rechaza la contaminación. El análisis ahora también pondera grupos lógicos y remuestrea por dominios; con solo seis dominios, el resultado no permite afirmar superioridad general.
+
+```sh
+python examples/audit_research_corpus.py
+```
+
+[Protocolo revisado](docs/PREREGISTERED_EXPERIMENT.md) · [Protocolo anterior archivado](docs/PREREGISTERED_EXPERIMENT_V07_ARCHIVE.md). No se han realizado llamadas comerciales ni demostrado una mejora en la precisión de comunicación entre IA.
