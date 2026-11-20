@@ -1,45 +1,61 @@
-# ÆON-Link — experimental semantic interoperability for AI agents
+# ÆON-Link — experimental AI-to-AI semantic messages
 
-**Status: experimental, pre-alpha reference implementation.** This is not a universal standard, is not endorsed by any AI provider, and has not been tested with real LLM interoperability.
+**Version: 0.3.0 · pre-alpha · open source (MIT)**
 
-[Español](README.es.md) · [Python reference](aeon_link.py) · [Tests](tests/test_reference.py) · [MIT license](LICENSE)
+[Español](README.es.md) · [Reference code](aeon_link.py) · [Security tests](tests/test_security.py) · [CI](.github/workflows/ci.yml)
 
-## What's in this repository
+ÆON-Link is an experimental, optional **semantic envelope** for communication between AI agents. It is **not** a universal standard, a replacement for A2A/MCP, or a proven solution to agent understanding. No AI vendor endorses it.
 
-- `aeon_link.py`: minimal, dependency-free Python reference implementation of message envelopes, version/ontology/capability negotiation, epistemic claim tags, evidence reference checks, local authorization checks and objective acknowledgments.
-- `tests/test_reference.py`: five reference tests.
-- `README.es.md`: Spanish quickstart.
+## What changed in 0.3.0
 
-Run:
+- Deterministic, restricted UTF-8 JSON encoding for Python and Node.js (`aeon_canonical.py`, `js/aeon.mjs`). Object keys are ASCII identifiers; values support Unicode strings, arrays, booleans, null and safe integers. Floating point and large integers fail closed. **Not RFC 8785/JCS.**
+- Optional HMAC-SHA256 envelope signatures with locally trusted key-to-sender binding, signed expiry and clock skew checks (`aeon_auth.py`, `js/aeon.mjs`).
+- Transactional, persistent replay detection with SQLite (`aeon_replay.py`). Check **after** signature verification and **before** side effects.
+- Optional SHA-256 equality check over provided evidence bytes. This does **not** prove the evidence source is authentic or the claim is true.
+- Automated security unit tests for Python and Node.js.
 
-```bash
+## Try it
+
+Requires Python 3.10+ and/or Node.js 22+; no third-party Python packages.
+
+```sh
 python -m unittest discover -s tests -v
+node --test js/*.test.mjs
 ```
 
-## What is not here (yet)
+Python sample:
 
-The broader **v0.2.0 extended prototype** previously developed also includes JSON Schema, Node.js, cross-language fixtures and additional tests. **It has not yet been imported in full into this repository.** This GitHub repository contains a reduced working reference, not the entire ZIP distribution.
+```python
+from aeon_link import hello, message
+from aeon_auth import TrustedKey, sign_envelope, verify_signed
+from aeon_replay import SQLiteReplayGuard
 
-The reference implementation does **not** run remote agents, call model APIs, provide a live A2A/MCP adapter, authenticate peer identities, verify source truth, guarantee semantic understanding, or establish cross-language canonical JSON equivalence.
+secret = b"example-key-only-not-for-production-32bytes!"
+task = message("task", "alpha", "beta", {
+    "objective": {"id": "o1", "text": "Analyze an incident"},
+    "constraints": {"read_only": True},
+    "action": "observe",
+    "claims": [], "evidence": [],
+})
+wire = sign_envelope(task, key_id="alpha-key", secret=secret)
+verified = verify_signed(wire, {"alpha-key": TrustedKey("alpha", secret)})
+SQLiteReplayGuard("seen.sqlite").check(verified, now=wire["meta"]["issued_at"])
+# Only NOW consider a separate host-side authorization decision.
+```
 
-The protocol is intended as an optional *semantic payload layer* compatible with existing infrastructure; it does not replace A2A, MCP, HTTP, or OAuth.
+**The sample keys are demonstrations; never commit real secrets.** Production also needs HTTPS/TLS, separate authentication and authorization policy, secure key provisioning, rate limiting, observability and shared replay storage when using multiple processes/hosts.
 
-## Design principles
+## Repository scope
 
-1. Express goals, constraints and uncertainty explicitly.
-2. Keep verified facts distinct from hypotheses and unknowns.
-3. Require references for asserted facts, while acknowledging that a reference is **not proof of truth**.
-4. Reject incompatible ontology or capability claims.
-5. Enforce authorization using **host-provided policy**, never untrusted message assertions.
-6. Keep semantic-understanding tests separate from byte-for-byte acknowledgement checks.
-7. Develop open conformance fixtures and independent benchmarks before making superiority claims.
+This GitHub repository publishes a **minimal standalone Python/Node hardening reference**. The independently packaged expanded **v0.3.0 proof of concept** (Python SDK with JSON Schema, full adapters, extended tests and cross-runtime signed fixture) is distributed separately with the project development artifacts. The two distributions are not yet identical.
 
-## Next milestones
+The repository reference intentionally has **no real model API integration, no provider-certified A2A/MCP SDK, no real tool execution and no semantic comprehension benchmark**. A response echoing a hash is **not** proof of understanding.
 
-- Import and audit the extended v0.2.0 package, including schema, Node.js implementation and CI.
-- Implement actual A2A/MCP payload adapters using current SDKs.
-- Compare multiple LLM providers using blinded semantic-reconstruction benchmarks.
-- Add cryptographic provenance and transport authentication.
-- Publish versioned conformance results and a governance model.
+### Design priorities
+1. Strict, versioned meaning and data shape.
+2. Receiver-provided trust and local authorization, never self-asserted access.
+3. Verifiable message integrity, expiry, replay detection and error cases.
+4. Cross-runtime conformance vectors and external independent benchmarks.
+5. Vendor-neutral interoperability through established A2A/MCP transport mechanisms.
 
-MIT license. Contributions and criticism welcome.
+MIT-licensed experimental research. Issues and critical review are welcome.
