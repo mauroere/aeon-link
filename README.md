@@ -140,3 +140,33 @@ python examples/generate_semantic_vectors.py
 Read [Semantic profile and test protocol](docs/SEMANTIC_CONFORMANCE.md). These features are a research extension, not a standardized feature of A2A or MCP.
 
 A local [paired semantic benchmark scorer](src/aeon_link/benchmark.py) is included; the sample data are synthetic and **do not** show a performance improvement over baseline protocols.
+
+## SDK 0.5.0 hardening — wire format remains 0.4.0
+
+This release adds a receiver-side signed-message gate, persistent replay checks
+(Python), awaited host-provided replay (Node), stricter cross-runtime JSON
+validation, metamorphic counterfactual/invariance tests and portable semantic
+decision receipts. **These are deterministic engineering controls, not a proof
+of AI understanding or superiority over A2A/MCP.**
+
+Run the expanded suite after `pip install -e .`:
+
+```sh
+python -m unittest discover -s tests -v
+node --test js/*.test.mjs
+python examples/generate_canonical_fuzz.py > /tmp/aeon-fuzz.json
+node js/verify-fuzz.mjs /tmp/aeon-fuzz.json
+python examples/generate_validation_vectors.py > /tmp/aeon-validate.json
+node js/verify-validation.mjs /tmp/aeon-validate.json
+python examples/generate_receipt_vectors.py > /tmp/aeon-receipts.json
+node js/verify-receipts.mjs /tmp/aeon-receipts.json
+```
+
+The canonical fuzz fixture contains 400 reproducible inputs; the validation
+parity corpus contains 121 inputs; the decision receipt corpus contains seven.
+See [inbound security](docs/INBOUND_SECURITY.md) and
+[decision receipt limitations](docs/DECISION_RECEIPTS.md).
+
+**Protocol wire version:** 0.4.0 · **SDK version:** 0.5.0. The canonical
+profile rejects prototype-reserved object keys that were previously allowed;
+implementations must fail closed rather than silently reinterpret data.

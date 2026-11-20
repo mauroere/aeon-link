@@ -66,3 +66,19 @@ node --test js/*.test.mjs
 ```
 
 Más detalles en [la especificación semántica](docs/SEMANTIC_CONFORMANCE.md).
+
+## SDK 0.5.0 (formato de mensajes 0.4.0)
+
+La versión 0.5.0 agrega recepción segura de mensajes firmados, validación del
+destinatario, política local de autorización y protección contra reenvíos.
+En Node el host debe proporcionar un registro antirrepetición atómico y
+persistente, y el SDK espera su finalización.
+
+También incorpora retos semánticos contrafácticos e invariantes, recibos de
+decisión que pueden comprobarse en Python y Node, y pruebas diferenciales de
+compatibilidad. La auditoría descubrió once discrepancias Python/Node en
+121 casos, posteriormente corregidas en la versión local.
+
+**No significa que la IA comprenda realmente una intención ni que el proyecto
+sea superior a A2A o MCP.** Las pruebas son principalmente deterministas.
+Consultá `docs/INBOUND_SECURITY.md` y `docs/DECISION_RECEIPTS.md`.

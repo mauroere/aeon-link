@@ -1,4 +1,4 @@
-"""Public interface for the experimental AEON-Link 0.4.0 Python package."""
+"""Public interface for the experimental AEON-Link SDK 0.5.0 (wire 0.4.0)."""
 from .core import (
     VERSION, ONTOLOGY, FEATURES, Agreement, LocalPolicy, ProtocolError,
     ReplayGuard, authorize_task, canonical_bytes, digest, hello, make_ack_result,
@@ -34,3 +34,8 @@ __all__ += ['SEMANTIC_PROFILE', 'ContractError', 'normalize_contract',
 
 from .benchmark import score_records, BenchmarkError
 __all__ += ["score_records", "BenchmarkError"]
+from .ingress import InboundReceipt, receive_signed
+from .metamorphic import metamorphic_cases, prepare_semantic_probe, analyze_responses
+from .receipts import make_decision_receipt, verify_decision_receipt
+__all__ += ['InboundReceipt','receive_signed','metamorphic_cases','prepare_semantic_probe',
+            'analyze_responses','make_decision_receipt','verify_decision_receipt']

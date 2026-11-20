@@ -12,6 +12,7 @@ import re
 from typing import Any
 
 KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
+RESERVED_KEYS = frozenset({"__proto__", "constructor", "prototype"})
 MAX_INTEGER = 2**53 - 1
 MAX_BYTES = 1_048_576
 MAX_DEPTH = 64
@@ -42,7 +43,7 @@ def _check(value: Any, depth: int = 0) -> None:
         return
     if isinstance(value, dict):
         for key, item in value.items():
-            if not isinstance(key, str) or KEY.fullmatch(key) is None:
+            if not isinstance(key, str) or KEY.fullmatch(key) is None or key in RESERVED_KEYS:
                 raise CanonicalizationError("Object keys must be ASCII identifiers")
             _check(item, depth + 1)
         return

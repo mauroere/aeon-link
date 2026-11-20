@@ -37,3 +37,9 @@ jobs:
       - run: node js/create-ack.mjs < fixtures/python-task.json > /tmp/aeon-node-ack.json
       - run: python examples/check_node_ack.py /tmp/aeon-node-ack.json
       - run: python examples/cross_runtime_security.py
+      - run: python examples/generate_canonical_fuzz.py > /tmp/aeon-canonical-fuzz.json
+      - run: node js/verify-fuzz.mjs /tmp/aeon-canonical-fuzz.json
+      - run: python examples/generate_validation_vectors.py > /tmp/aeon-validation-vectors.json
+      - run: node js/verify-validation.mjs /tmp/aeon-validation-vectors.json
+      - run: python examples/generate_receipt_vectors.py > /tmp/aeon-receipt-vectors.json
+      - run: node js/verify-receipts.mjs /tmp/aeon-receipt-vectors.json

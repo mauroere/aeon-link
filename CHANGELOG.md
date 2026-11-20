@@ -32,3 +32,18 @@
 ## 0.1.0 — proof-of-concept predecessor
 
 - Simple envelope, claim tagging, deterministic simulated acknowledgment.
+
+## SDK 0.5.0 (experimental; wire profile remains 0.4.0)
+
+- Add receiver-side authenticated, recipient-bound and policy-bound ingress
+  with durable Python replay registration and awaited host-provided Node replay.
+- Refuse non-plain Node objects, accessors, sparse arrays, negative zero, and
+  reserved prototype-property keys in canonical JSON; mirror reserved keys in
+  Python to preserve parity.
+- Fix eleven Python/Node validator disagreements found by paired differential
+  tests (sender/recipient length, invalid date-time values and related cases).
+- Add counterfactual plus invariant semantic probes, deterministic decision
+  receipts and a multi-agent response scoring helper.
+- Validate 400 randomized canonical encodings, 121 paired validator cases and
+  seven cross-language decision receipts, in addition to unit test suites.
+- Add explicit documentation of semantic and operational security gaps.

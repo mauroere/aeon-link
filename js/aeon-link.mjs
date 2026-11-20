@@ -20,6 +20,19 @@ const onlyKeys = (o, keys) => {
   if (Object.keys(o).some(k => !keys.includes(k))) throw new ProtocolError('Unexpected key');
 };
 const str = x => typeof x === 'string' && x.length > 0;
+const lengthCP = s => [...s].length;
+function validRfc3339(s) {
+  if(typeof s !== 'string') return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?([Zz]|[+-]\d{2}:\d{2})$/.exec(s);
+  if(!m) return false;
+  const [year,month,day,hour,minute,second]=m.slice(1,7).map(Number);
+  if(month<1||month>12||hour>23||minute>59||second>59) return false;
+  const leap=(year%4===0 && (year%100!==0 || year%400===0));
+  const days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+  if(day<1||day>days[month-1]) return false;
+  if(m[7].length===6){const oh=Number(m[7].slice(1,3)),om=Number(m[7].slice(4));if(oh>23||om>59)return false;}
+  return true;
+}
 const arr = x => Array.isArray(x);
 const uniq = x => new Set(x).size === x.length;
 const uuid = x => typeof x === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
@@ -30,7 +43,7 @@ export function validateEnvelope(m) {
   requireKeys(m, ['protocol', 'version', 'ontology', 'message_id', 'kind', 'sender', 'recipient', 'body']);
   onlyKeys(m, ['protocol', 'version', 'ontology', 'message_id', 'kind', 'sender', 'recipient', 'body']);
   assert(m.protocol === 'aeon-link' && m.version === VERSION && m.ontology === ONTOLOGY, 'Unsupported protocol/version/ontology');
-  assert(uuid(m.message_id) && str(m.sender) && str(m.recipient), 'Invalid envelope identities');
+  assert(uuid(m.message_id) && str(m.sender) && lengthCP(m.sender)<=256 && str(m.recipient) && lengthCP(m.recipient)<=256, 'Invalid envelope identities');
   assert(['hello','task','result','error'].includes(m.kind), 'Invalid message kind');
   const b = m.body;
   if (m.kind === 'hello') {
@@ -57,7 +70,7 @@ export function validateEnvelope(m) {
       requireKeys(e,['id','source_uri']); onlyKeys(e,['id','source_uri','sha256','observed_at']);
       assert(str(e.id) && str(e.source_uri) && !evidenceIds.has(e.id), 'Invalid/duplicate evidence');
       if ('sha256' in e) assert(hash(e.sha256),'Bad evidence hash');
-      if ('observed_at' in e) assert(str(e.observed_at), 'Invalid timestamp');
+      if ('observed_at' in e) assert(validRfc3339(e.observed_at), 'Invalid RFC3339 timestamp');
       evidenceIds.add(e.id);
     }
     const claimIds = new Set();

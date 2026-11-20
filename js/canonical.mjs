@@ -3,8 +3,10 @@
  */
 import {createHash} from 'node:crypto';
 const KEY = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
+const RESERVED = new Set(['__proto__','constructor','prototype']);
 const MAX_BYTES = 1_048_576;
 const isObj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+const isPlain = x => Object.getPrototypeOf(x)===Object.prototype || Object.getPrototypeOf(x)===null;
 export class CanonicalizationError extends Error {}
 function fail(reason) {throw new CanonicalizationError(reason);}
 function encode(x, depth = 0) {
@@ -12,7 +14,7 @@ function encode(x, depth = 0) {
   if (x === null) return 'null';
   if (typeof x === 'boolean') return x ? 'true' : 'false';
   if (typeof x === 'number') {
-    if (!Number.isSafeInteger(x)) fail('Expected safe JSON integer');
+    if (!Number.isSafeInteger(x) || Object.is(x, -0)) fail('Expected unambiguous safe JSON integer');
     return JSON.stringify(x);
   }
   if (typeof x === 'string') {
@@ -26,10 +28,18 @@ function encode(x, depth = 0) {
     }
     return JSON.stringify(x);
   }
-  if (Array.isArray(x)) return '[' + x.map(v=>encode(v,depth+1)).join(',') + ']';
+  if (Array.isArray(x)) {
+    for (let i=0;i<x.length;i++) if (!Object.hasOwn(x,i)) fail('Sparse array is not JSON');
+    return '[' + x.map(v=>encode(v,depth+1)).join(',') + ']';
+  }
   if (isObj(x)) {
+    if (!isPlain(x)) fail('Only plain JSON objects are supported');
     const keys = Object.keys(x).sort();
-    for (const k of keys) if (!KEY.test(k)) fail('Object keys must be ASCII identifiers');
+    for (const k of keys) {
+      if (!KEY.test(k) || RESERVED.has(k)) fail('Object keys must be safe ASCII identifiers');
+      const d = Object.getOwnPropertyDescriptor(x,k);
+      if (!d || !Object.hasOwn(d,'value')) fail('Accessor properties are not JSON');
+    }
     return '{' + keys.map(k=>JSON.stringify(k)+':'+encode(x[k],depth+1)).join(',') + '}';
   }
   return fail('Invalid JSON value');

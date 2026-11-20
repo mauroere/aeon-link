@@ -1,13 +1,13 @@
 """Transport payload MAPPINGS only — not A2A or MCP server/client implementations."""
 from __future__ import annotations
 
-from .core import ProtocolError, validate_envelope
+from .core import ProtocolError, validate_envelope, VERSION
 
 
 def as_a2a_data_part(envelope: dict) -> dict:
     """Place validated envelope in an A2A structured-data Part."""
     validate_envelope(envelope)
-    return {"data": {"aeon_link": envelope}, "metadata": {"aeon_link_version": "0.2.0"}}
+    return {"data": {"aeon_link": envelope}, "metadata": {"aeon_link_version": VERSION}}
 
 
 def from_a2a_data_part(part: dict) -> dict:
