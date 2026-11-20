@@ -92,3 +92,7 @@ Se agregó CodeQL (análisis estático automatizado de GitHub), Dependabot y un 
 Se corrigió una fuga de conexiones SQLite y se bloquearon las redirecciones HTTP de los adaptadores para evitar redirigir credenciales.
 
 [Estado y próximos experimentos](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) · [Política de vulnerabilidades](SECURITY.md)
+
+### Intercambio entre dos modelos comerciales (optativo)
+
+`examples/live_model_relay.py` transmite un objetivo restringido del modelo A al B y verifica si B mantiene la prohibición de escritura. **Sin claves autorizadas no realiza ninguna llamada real**. Necesita el parámetro `--i-accept-api-costs`; nunca ejecuta las acciones que analiza. Los tests incluidos utilizan respuestas simuladas.
