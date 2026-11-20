@@ -42,3 +42,21 @@ class AdversarialTests(unittest.TestCase):
         with self.assertRaises(ContractError):normalize_contract(c)
 
 if __name__=='__main__':unittest.main()
+
+class OrderingRegressionTests(unittest.TestCase):
+    def test_reject_unicode_clause_id(self):
+        c=contract();c['clauses'][0]['id']='🚀'
+        with self.assertRaises(ContractError): normalize_contract(c)
+    def test_reject_unicode_action_id(self):
+        c=contract();c['allowed_actions']=['🧠']
+        with self.assertRaises(ContractError): normalize_contract(c)
+
+class UnhashableInputTests(unittest.TestCase):
+    def test_unhashable_prediction_is_structured_error(self):
+        from aeon_link.benchmark import score_records, BenchmarkError
+        row=dict(method='m',case_id='c',expected='satisfied',predicted=['violated'],latency_ms=0,tokens=0)
+        with self.assertRaises(BenchmarkError):score_records([row])
+    def test_unhashable_relation_type_is_structured_error(self):
+        g={'profile':GRAPH_PROFILE,'nodes':[{'id':'e','kind':'evidence'}],
+           'edges':[{'from':'e','to':'e','type':['supports']}]}
+        with self.assertRaises(GraphError):validate_graph(g)

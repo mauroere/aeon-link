@@ -32,3 +32,11 @@ test('respond to challenge without expected answers',()=>{
   const answer=respondToChallenge(c,publicChallenge);
   assert.deepEqual(answer.answers.map(x=>x.status),fixture.cases.map(x=>x.expected.status));
 });
+test('Unicode clause identifiers are rejected to avoid cross-runtime sorting divergence',()=>{
+  const bad=JSON.parse(JSON.stringify(c));bad.clauses[0].id='🚀';
+  assert.throws(()=>normalizeContract(bad),ContractError);
+});
+test('Unicode action identifiers are rejected',()=>{
+  const bad=JSON.parse(JSON.stringify(c));bad.allowed_actions=['🌐'];
+  assert.throws(()=>normalizeContract(bad),ContractError);
+});

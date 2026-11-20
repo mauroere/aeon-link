@@ -15,7 +15,7 @@
 }
 ```
 
-Clauses: `require` or `forbid`; operators: `eq`, `ne`, `exists`, `gt`, `gte`, `lt`, `lte`, `in`. Paths use a constrained JSON Pointer subset with ASCII identifier keys and nonnegative array indices. Comparison of booleans to integers is disallowed; missing data yields **unknown**, never false, unless the operation explicitly checks existence.
+Clause IDs and action IDs use ASCII identifier syntax. Clauses: `require` or `forbid`; operators: `eq`, `ne`, `exists`, `gt`, `gte`, `lt`, `lte`, `in`. Paths use a constrained JSON Pointer subset with ASCII identifier keys and nonnegative array indices. Comparison of booleans to integers is disallowed; missing data yields **unknown**, never false, unless the operation explicitly checks existence.
 
 Results have statuses `satisfied`, `violated`, `incomplete` plus ordered violated and unknown clause IDs. If action is not allowed, the result is immediately `violated`. Evaluation runs in an isolated pure function without executing tools or system changes.
 

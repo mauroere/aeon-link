@@ -20,3 +20,8 @@
 ## Protocol
 
 Use a pre-registered test set of >=100 independent tasks, 3 or more provider/model families if accessible, replicated trials, and fixed model versions / prompts / temperature where available. Use A/B randomization, confidence intervals, and publish failures. If AEON-Link does not outperform the baselines, report it clearly rather than claiming universal superiority.
+
+
+## Reproducible scorer added in v0.4
+
+The local `aeon_link.benchmark.score_records` API accepts recorded cases for two or more methods, requires **identical case IDs and ground truth across methods**, counts explicit errors as failures, and reports Wilson 95% accuracy intervals, mean latencies and token counts. It does not collect model outputs or contain measured superiority data. Try `python examples/benchmark_sample.py`; its rows are explicitly **synthetic** and must not be cited as empirical performance.

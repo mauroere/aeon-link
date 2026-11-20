@@ -6,6 +6,7 @@
 - Evidence relationship DAG with explicit external-trust boundary, contested claims, potential contradictions.
 - Versioned protocol envelope and capability negotiation for semantic/graph extensions.
 - Regression CI covering Python 3.10–3.13 and Node.js.
+- Paired benchmark scorer with Wilson confidence intervals, validation and explicit failure accounting (no measured model claims).
 - Limitations stated: no real LLM benchmark or independently verified semantic comprehension.
 
 # Changelog

@@ -138,3 +138,5 @@ python examples/generate_semantic_vectors.py
 ```
 
 Read [Semantic profile and test protocol](docs/SEMANTIC_CONFORMANCE.md). These features are a research extension, not a standardized feature of A2A or MCP.
+
+A local [paired semantic benchmark scorer](src/aeon_link/benchmark.py) is included; the sample data are synthetic and **do not** show a performance improvement over baseline protocols.

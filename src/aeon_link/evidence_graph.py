@@ -56,7 +56,7 @@ def validate_graph(graph: dict) -> dict:
         if not isinstance(edge, dict) or set(edge) != {'from', 'to', 'type'}:
             raise GraphError('Malformed relation')
         f, t, rel = edge['from'], edge['to'], edge['type']
-        if not isinstance(f, str) or not isinstance(t, str) or f not in by_id or t not in by_id or rel not in RELATIONS:
+        if not isinstance(f, str) or not isinstance(t, str) or f not in by_id or t not in by_id or not isinstance(rel, str) or rel not in RELATIONS:
             raise GraphError('Invalid relation endpoint/type')
         if (f, t, rel) in refs:
             raise GraphError('Duplicate relation')
@@ -90,6 +90,8 @@ def analyze_graph(graph: dict, *, trusted_evidence_ids=()) -> dict:
     nodes = {n['id']: n for n in graph['nodes']}
     if not isinstance(trusted_evidence_ids, (list, tuple, set, frozenset)):
         raise GraphError('Trusted evidence IDs must be a collection')
+    if any(not isinstance(i, str) for i in trusted_evidence_ids):
+        raise GraphError('Evidence IDs must be strings')
     trusted = set(trusted_evidence_ids)
     if any(not isinstance(i, str) or i not in nodes or nodes[i]['kind'] != 'evidence' for i in trusted):
         raise GraphError('Unknown/untrusted evidence identity')

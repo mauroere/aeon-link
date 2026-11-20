@@ -1,4 +1,4 @@
-# ÆON-Link 0.3.0 — Experimental Semantic Payload Specification
+# ÆON-Link 0.4.0 — Experimental Semantic Payload Specification
 
 > **Experimental draft:** not a ratified standard or a security certification. Uppercase requirement words below are design requirements for this prototype, not assertions of industry adoption.
 
@@ -11,8 +11,8 @@ Different autonomous agents should be able to exchange tasks with (a) a known se
 Each message is a JSON object conforming to `src/aeon_link/schema.json`. Required keys:
 
 - `protocol`: fixed `aeon-link`.
-- `version`: fixed `0.3.0` in this implementation.
-- `ontology`: fixed `urn:aeon-link:ontology:core:0.3.0`.
+- `version`: fixed `0.4.0` in this implementation.
+- `ontology`: fixed `urn:aeon-link:ontology:core:0.4.0`.
 - `message_id`: a UUID.
 - `kind`: `hello`, `task`, `result`, or `error`.
 - `sender` and `recipient`: string identities **as claimed in data**, not authenticated identities.
@@ -22,7 +22,7 @@ Unknown envelope and body fields MUST be rejected. Additional transport metadata
 
 ## Handshake
 
-Agents send reciprocal `hello` messages containing `versions`, `ontologies`, `features`. This release requires `0.3.0` and the exact registered core ontology. No downgrade or implicit ontology translation is permitted. Features are intersected and required features can be asserted. A host MUST validate a handshake before relying on the semantics of incoming task messages.
+Agents send reciprocal `hello` messages containing `versions`, `ontologies`, `features`. This release requires `0.4.0` and the exact registered core ontology. No downgrade or implicit ontology translation is permitted. Features are intersected and required features can be asserted. A host MUST validate a handshake before relying on the semantics of incoming task messages.
 
 ## Claim semantics
 
@@ -32,7 +32,7 @@ Agents send reciprocal `hello` messages containing `versions`, `ontologies`, `fe
 
 `unknown`: information not established. The evidence reference list may be empty.
 
-`evidence`: a local ID plus `source_uri`; an optional SHA-256 digest of referenced content and timestamp. Authenticity, retrieval, existence and digest checking require a separate verifier, not implemented in 0.3.0 by the core (optional local SHA-256 content checks are available). A verifier SHOULD label its verification status independently of claim status in a future revision.
+`evidence`: a local ID plus `source_uri`; an optional SHA-256 digest of referenced content and timestamp. Authenticity, retrieval, existence and digest checking require a separate verifier, not implemented in 0.4.0 by the core (optional local SHA-256 content checks are available). A verifier SHOULD label its verification status independently of claim status in a future revision.
 
 Claim IDs and evidence IDs MUST be unique within the task. Every referenced evidence ID MUST exist. Agents SHOULD preserve the underlying source and distinguish observation from inference.
 
@@ -56,13 +56,13 @@ Malformed frames, unknown fields, mismatched ontologies or missing critical feat
 
 ## Compatibility / release policy
 
-0.3.0 is intentionally a single-profile research implementation, not a full extensible registry. Proposed additions and their threat models should be reviewed before accepting more expressive message kinds. Do not advertise compatibility with a provider until tested using the provider's actual API.
+0.4.0 is intentionally a single-profile research implementation, not a full extensible registry. Proposed additions and their threat models should be reviewed before accepting more expressive message kinds. Do not advertise compatibility with a provider until tested using the provider's actual API.
 
 ## Cross-language vector
 
 `fixtures/cross-language-vectors.json` contains a complete Python-generated message and digests. `js/test.mjs` confirms Node.js obtains identical hashes for this fixture. `js/create-ack.mjs` then emits a Node-generated result that Python `verify_ack` checks. This is a very small interoperability smoke test, not an exhaustive cross-language guarantee.
 
-## Signed wrapper (optional, v0.3.0)
+## Signed wrapper (optional, v0.4.0)
 
 An HMAC wrapper contains `envelope`, `meta` (`alg=HS256`, `key_id`, `issued_at`, `expires_at`) and a hex `signature`. Signature input is `HMAC_SHA256(secret, b"AEON-LINK-HMAC-SHA256-v1\x00" + canonical_bytes({"envelope":...,"meta":...}))`. The receiver MUST obtain the key-to-sender mapping from a trusted source outside the message. This is shared-secret authentication only, not a distributed PKI.
 
@@ -71,3 +71,8 @@ The trusted receiver SHOULD verify the signature and message lifetime, apply `SQ
 The restricted canonical encoding uses JSON with ASCII identifier keys, Unicode strings without unpaired surrogates, booleans, null, arrays and safe signed integers. No floating-point or numbers larger than 2^53-1. It sorts object keys lexicographically and emits compact UTF-8; raw canonical parsing compares input bytes against reserialized bytes, rejecting duplicate keys and alternative encodings. **This is not RFC 8785.**
 
 There is no proof of semantic understanding, no automatic agent discovery, no network transport, no cross-organizational key exchange and no authority to execute an action.
+
+
+## Semantic extensions (experimental; v0.4)
+
+The main envelope has two additional negotiated capability names: `semantic.contract.v1` and `evidence.graph.v1`. Their optional payload formats are specified in [SEMANTIC_CONFORMANCE.md](SEMANTIC_CONFORMANCE.md). A negotiated feature does not prove shared understanding and does not authorize actions; the receiver MUST still validate the actual payload and local permissions. Contracts use bounded, ASCII-only clause and action identifiers to avoid Python/JavaScript sort-order discrepancies.

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
+import re
 from typing import Any, Iterable
 
 from .canonical import canonical_bytes, digest
@@ -62,7 +63,7 @@ def normalize_contract(contract: dict) -> dict:
         raise ContractError("Clauses must be a nonempty bounded list")
     if not isinstance(actions, list) or not actions or len(actions) > 32:
         raise ContractError("Invalid allowed actions")
-    if any(not isinstance(a, str) or not a or len(a) > 128 for a in actions):
+    if any(not isinstance(a, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]{0,127}", a) for a in actions):
         raise ContractError("Invalid action")
     if len(set(actions)) != len(actions):
         raise ContractError("Duplicate action")
@@ -74,7 +75,7 @@ def normalize_contract(contract: dict) -> dict:
         if set(clause) - {"id", "mode", "path", "op", "value"}:
             raise ContractError("Unexpected clause fields")
         cid, mode, op = clause["id"], clause["mode"], clause["op"]
-        if not isinstance(cid, str) or not cid or len(cid) > 128 or cid in ids:
+        if not isinstance(cid, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]{0,127}", cid) or cid in ids:
             raise ContractError("Invalid or duplicated clause ID")
         ids.add(cid)
         if not isinstance(mode, str) or not isinstance(op, str) or mode not in MODES or op not in OPS:
@@ -172,7 +173,7 @@ def create_challenge(contract: dict, cases: list[dict]) -> tuple[dict, Challenge
         if not isinstance(case, dict) or set(case) != {"id", "state", "action"}:
             raise ContractError("Malformed test case")
         cid = case["id"]
-        if not isinstance(cid, str) or not cid or len(cid)>128 or cid in seen:
+        if not isinstance(cid, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]{0,127}", cid) or cid in seen:
             raise ContractError("Duplicated challenge case ID")
         seen.add(cid)
         outcome = evaluate_contract(contract, case["state"], case["action"])['status']

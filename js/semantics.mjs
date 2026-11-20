@@ -9,6 +9,7 @@ const OPS = new Set(['eq','ne','exists','gt','gte','lt','lte','in']);
 const MODES = new Set(['require','forbid']);
 const STATUSES = new Set(['satisfied','violated','incomplete']);
 const MISSING = Symbol('missing');
+const ID=/^[A-Za-z_][A-Za-z0-9_.-]{0,127}$/;
 const fail = msg => {throw new ContractError(msg)};
 const isObj = x => x!==null && typeof x==='object' && !Array.isArray(x);
 const sorted = x => [...x].sort();
@@ -27,11 +28,11 @@ export function normalizeContract(contract){
   if(!isObj(contract)||Object.keys(contract).sort().join(',')!=='allowed_actions,clauses,profile'||contract.profile!==PROFILE)fail('Invalid semantic contract');
   const {clauses,allowed_actions:actions}=contract;
   if(!Array.isArray(clauses)||clauses.length<1||clauses.length>64||!Array.isArray(actions)||actions.length<1||actions.length>32)fail('Invalid lengths');
-  if(actions.some(a=>typeof a!=='string'||!a||a.length>128)||new Set(actions).size!==actions.length)fail('Invalid actions');
+  if(actions.some(a=>typeof a!=='string'||!ID.test(a))||new Set(actions).size!==actions.length)fail('Invalid actions');
   const ids=new Set();
   for(const c of clauses){
     if(!isObj(c)||!['id','mode','path','op'].every(k=>Object.hasOwn(c,k))||Object.keys(c).some(k=>!['id','mode','path','op','value'].includes(k)))fail('Malformed clause');
-    if(typeof c.id!=='string'||!c.id||c.id.length>128||ids.has(c.id))fail('Invalid clause ID');
+    if(typeof c.id!=='string'||!ID.test(c.id)||ids.has(c.id))fail('Invalid clause ID');
     ids.add(c.id);
     if(!MODES.has(c.mode)||!OPS.has(c.op))fail('Invalid clause operation');
     tokens(c.path);

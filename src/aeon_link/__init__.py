@@ -31,3 +31,6 @@ __all__ += ['SEMANTIC_PROFILE', 'ContractError', 'normalize_contract',
     'contract_fingerprint', 'evaluate_contract', 'counterfactual_cases',
     'create_challenge', 'score_challenge', 'respond_to_challenge',
     'EVIDENCE_GRAPH_PROFILE', 'GraphError', 'validate_graph', 'analyze_graph']
+
+from .benchmark import score_records, BenchmarkError
+__all__ += ["score_records", "BenchmarkError"]
