@@ -1,3 +1,11 @@
+## 0.8.0 — methodological integrity repair (2026-11-20)
+
+- Discovered 65 logically duplicated pilot/evaluation scenario groups in v0.7 after removing decoy IDs/notes.
+- Changed generator to diversify decision-relevant numeric conditions, stratify classes and partition disjoint logical groups (144/216 rows; 114/174 logical groups; zero overlap); locked new corpus digest.
+- Added mandatory full-dataset contamination detection, logical-group-balanced scoring and domain-cluster bootstrap diagnostics.
+- Added reproducible corpus audit CLI and CI step, four additional regression tests; archived v0.7 study plan.
+- No commercial-model results, independent security sign-off or generalized superiority claim.
+
 ## 0.7.0 — preregistered three-method research harness
 - Six synthetic domains, 360 deterministic oracle-scored cases, split pilot/evaluation.
 - Distinct natural/JSON/AEON payloads and untrusted-note injection probes.
