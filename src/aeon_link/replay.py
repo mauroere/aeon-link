@@ -13,8 +13,11 @@ class SQLiteReplayGuard:
     """
     def __init__(self, path: str | Path):
         self.path = str(path)
-        with self._connection() as conn:
+        conn = self._connection()
+        try:
             conn.execute('CREATE TABLE IF NOT EXISTS seen (sender TEXT NOT NULL, message_id TEXT NOT NULL, expires_at INTEGER NOT NULL, PRIMARY KEY(sender,message_id))')
+        finally:
+            conn.close()
 
     def _connection(self):
         return sqlite3.connect(self.path, timeout=10, isolation_level=None)
