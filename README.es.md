@@ -102,3 +102,6 @@ Se corrigió una fuga de conexiones SQLite y se bloquearon las redirecciones HTT
 python examples/preregistered_research.py generate --output aeon-research-corpus.json
 python examples/preregistered_research.py live --provider openai --model MODELO_HABILITADO --limit 5 --i-accept-api-costs
 ```
+
+
+**Piloto opcional en GitHub:** en Actions existe `Manual paid LLM pilot (opt-in only)`, que requiere un secreto API configurado y una autorización explícita de consumo. Máximo 12 casos por ejecución; no se activa automáticamente.
