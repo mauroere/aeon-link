@@ -184,3 +184,13 @@ python examples/live_provider_benchmark.py --help
 ```
 
 See [status and adoption ledger](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) and [security reporting](SECURITY.md). A2A and MCP are not alternatives to AEON-Link payloads; benchmark the **same protocol with and without** the enriched semantic payload, not these different layers against one another.
+
+### Optional two-commercial-model semantic relay
+
+A separate explicit opt-in test makes one request to provider/model A to reproduce a fixed read-only task, verifies that the exact constraints were preserved, then asks provider/model B to decide whether a requested action is allowed. **Both models are real only if you supply valid provider credentials and explicitly execute this command**; otherwise use mock tests. It **never executes** read/write/execute as a tool.
+
+```bash
+python examples/live_model_relay.py --provider-a openai --model-a <OPENAI_MODEL_ID> --provider-b anthropic --model-b <CLAUDE_MODEL_ID> --action write --i-accept-api-costs
+```
+
+No such live relay was run during creation; two-provider credentials were unavailable. It is a constrained behavioral probe, not universal semantic proof.
