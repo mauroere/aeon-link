@@ -22,8 +22,14 @@ class ResearchExperimentTests(unittest.TestCase):
         self.assertEqual(len(self.corpus['splits']['evaluation']),216)
         self.assertEqual(len({x['case_id'] for s in SPLITS for x in self.corpus['splits'][s]}),360)
 
+    def test_nested_multiclause_cases(self):
+        for split in SPLITS:
+            cases=self.corpus['splits'][split]
+            self.assertTrue(any(c['complexity']=='extended' and len(c['contract']['clauses'])==7 for c in cases))
+            self.assertTrue(any(c['complexity']=='basic' and len(c['contract']['clauses'])==4 for c in cases))
+
     def test_strict_determinism(self):
-        self.assertEqual(dataset_digest(self.corpus), 'aa2d2d9ffc28ed085d99c00e771db9d6bafabbc350b41e974f555bff89392c34')
+        self.assertEqual(dataset_digest(self.corpus), 'bf04eea5ac30f817b164b341ce9a893f5b2142c7a4f1448defb2211646bda3ab')
         self.assertEqual(self.corpus,make_cases())
         self.assertEqual(dataset_digest(self.corpus),dataset_digest(make_cases()))
 
