@@ -1,172 +1,69 @@
-# ÆON-Link — experimental semantic interoperability for AI agents
+# ÆON-Link — experimental semantics for AI-agent communication
 
-[![Status: experimental](https://img.shields.io/badge/status-experimental-orange)](#status) 
+**SDK 0.6.0 · Wire protocol 0.4.0 · MIT · pre-alpha**
 
-**SDK release: 0.5.0 (wire protocol: 0.4.0; proof of concept).** This is **not** an adopted industry standard, does **not** connect to real LLM APIs, and does **not** independently authenticate agents or verify the truth of sources. It is a proposal and runnable SDK for semantically tagged messages between different agent systems.
+[Español](README.es.md) · [Specification](docs/SPEC.md) · [Security](SECURITY.md) · [Independent review & adoption status](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) · [Changelog](CHANGELOG.md)
 
-**Positioning:** AEON-Link is an optional *semantic payload layer*. It is designed to sit **on top of** existing agent protocols; it does not replace A2A, MCP, HTTP, OAuth, or provider SDKs.
+ÆON-Link is an **optional semantic payload format**, intended to complement—not replace—A2A, MCP, HTTP, OAuth or official model APIs. It represents objectives, restrictions, epistemic status and evidence references, and provides bounded deterministic checks. It is **not** an adopted standard; tests do not establish universal semantic understanding, source truth, or superiority over established protocols.
 
-[Leer en español](README.es.md)
+## What exists in 0.6
 
-## What works today
+- Python SDK and Node.js implementation of a restricted, reproducible JSON profile, schema checks, version/ontology/capability handshake, and signed-message validation.
+- Optional HMAC-SHA256 signatures bound to pre-provisioned sender identity, expiry, local authorization checks and SQLite replay detection. This does **not** replace transport security, key management or host-side execution policy.
+- Executable semantic contracts, counterfactual / invariance probes, decision receipts and evidence-reference graphs. These only assess defined behaviors, not intrinsic model understanding or the truth of claims.
+- Minimal **payload mappings** for A2A data parts and MCP tool results; not full network protocol servers.
+- Three **optional** commercial provider HTTP clients: OpenAI Responses, Anthropic Messages and Gemini generateContent, isolated from tool execution.
+- Opt-in paid live experiments: paired plain-JSON-vs-semantic-payload tests and a restricted task relay from model A to model B. **No live commercial provider calls were made in preparing this release:** tests mock their responses.
+- Python/Node automated tests, CodeQL security-extended workflow, Dependabot, security-reporting guidance and an [external-assessor request](.github/ISSUE_TEMPLATE/security-external-review.md).
 
-- Strict JSON Schema Draft 2020-12 envelope validation (schema packaged with the Python SDK).
-- Version + core ontology + feature handshake that fails closed on incompatibility.
-- Explicit `fact`, `hypothesis`, `unknown` claim classification and evidence ID referential integrity.
-- Objective/constraint acknowledgment using reproducible Python JSON digests.
-- Host-provided authorization decisions; sender assertions do not grant permissions.
-- In-memory duplicate message detection.
-- Standalone examples mapping AEON-Link envelopes into A2A DataParts and MCP tool-result `structuredContent`. **Mappings are not full A2A or MCP implementations.**
-- Offline demo and automated tests without API credentials or external network access.
-- Minimal Node.js runtime with shared fixtures; **cross-language handshake/digest/acknowledgment checks** validated against the Python implementation.
+## Install and verify
 
-## Install and run
+Python 3.10+ and Node.js 22+ for cross-runtime tests:
 
-Requires Python 3.10+.
-
-```bash
-python -m pip install -e .
-python -m unittest discover -s tests -v
-python examples/demo.py
-node --test js/test.mjs
-node js/create-ack.mjs < fixtures/python-task.json > /tmp/aeon-node-ack.json
-python examples/check_node_ack.py /tmp/aeon-node-ack.json
-```
-
-Validate a file: `aeon-link path/to/envelope.json`, or `aeon-link -` for stdin.
-
-## Example: two agent endpoints sharing a semantic contract
-
-```python
-from aeon_link import hello, negotiate, message, LocalPolicy, authorize_task
-
-left = hello("agent-x", "agent-y")
-right = hello("agent-y", "agent-x")
-agreement = negotiate(left, right, required_features=["claims.v1"])
-
-task = message("task", "agent-x", "agent-y", {
-    "objective": {"id": "investigate-1", "text": "Assess the outage", "success_criteria": ["List evidence gaps"]},
-    "constraints": {"read_only": True},
-    "action": "observe", "claims": [], "evidence": [],
-})
-# The host supplies this policy after authenticating the peer.
-authorize_task(task, LocalPolicy(frozenset({"observe"}), verified_sender="agent-x"))
-```
-
-See `examples/demo.py` for task/result acknowledgment and payload adapters.
-
-## Status and limitations
-
-These are intentional boundaries of the current prototype:
-
-1. A reference such as `source_uri` **does not prove the source is authentic or true**. The validator checks that a cited evidence ID exists, nothing more.
-2. LocalPolicy checks a host-supplied identity but does **not** authenticate that identity. An HTTP deployment needs TLS, authentication and signed authorization outside this package.
-3. An acknowledgment digest proves receipt of *identical encoded content*, not that the remote model genuinely understands the meaning.
-4. The pack/unpack adapters are payload mappings only; neither a live A2A implementation nor a live MCP server is included.
-5. No objective execution, agent network communication, API access, distributed storage, telemetry or persistent replay protection is implemented.
-6. The Node.js validator is a manually written subset of the Python JSON Schema contract; it is **not yet a complete independent conformance implementation**.
-7. `canonical_bytes` is reproducible for ordinary JSON objects in the same Python implementation; it is **not RFC 8785 / JCS** and cross-language agreement is not established.
-8. Since the SDK does not execute instructions, it is not an authorization or sandbox boundary for a separate execution engine.
-
-## Roadmap toward broader adoption
-
-1. Complete independent interoperability suite (Python ⇄ TypeScript ⇄ Rust) and cross-language canonicalization (RFC 8785).
-2. Real A2A 1.0 and MCP 2026-07-28 adapters, plus test agents using their official SDKs.
-3. Signed evidence and provenance receipts (inspired by W3C PROV-O), identity and authorization.
-4. Semantic compatibility tests using independent LLM providers and human-graded correctness.
-5. Public conformance suite with test vectors, fuzzing and versioned registries.
-6. Peer review, implementer feedback and open specification governance.
-
-## Documents
-
-- [Normative-ish experimental specification](docs/SPEC.md)
-- [Security limitations](docs/SECURITY.md)
-- [Contributing and governance](docs/GOVERNANCE.md)
-- [Adoption and benchmarks](docs/BENCHMARKS.md)
-
-## References
-
-- A2A 1.0: https://a2a-protocol.org/v1.0.0/specification/
-- MCP 2026-07-28: https://modelcontextprotocol.io/specification/2026-07-28
-- JSON Schema Draft 2020-12: https://json-schema.org/draft/2020-12/
-- W3C PROV-O: https://www.w3.org/TR/prov-o/
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
-## v0.3.0 security and interoperability hardening
-
-- The Python and Node.js implementations now reject floating-point values, unsafe integers, unpaired Unicode surrogates and non-ASCII object keys in canonicalized data. This deliberate profile is NOT RFC 8785.
-- Message authentication using externally provisioned 32-byte-or-longer HMAC keys (HS256), key-to-sender binding, signature-verified expiry and time-skew checks.
-- Process-restart-safe replay protection with Python SQLite (transactional UNIQUE constraint).
-- Explicit content SHA-256 checking for locally provided evidence bytes; this is **not source verification**.
-- Bidirectional Python↔Node signed-message test with Unicode content. No model API or secret is necessary to run the fixture.
-
-Run security tests:
-
-```bash
+```sh
 python -m pip install -e .
 python -m unittest discover -s tests -v
 node --test js/*.test.mjs js/test.mjs
-python examples/cross_runtime_security.py
 ```
 
-### Verified receipt pattern
+If the environment is offline but `jsonschema` is installed, from the repository root use `PYTHONPATH=src python -m unittest discover -s tests -v` instead of an editable installation.
 
-1. Receive over authenticated transport (HTTPS/TLS).
-2. Parse canonical bytes and validate JSON/schema.
-3. Verify signature, source key binding and expiry against a LOCAL trust registry.
-4. Reject replays with a shared/durable replay store.
-5. Authorize the action using the verified identity and LOCAL policies.
-6. Only then evaluate/expose the request to a model or tool. The SDK itself runs no external action.
-
-Do not use demo keys in production. Real external AI model communication, semantics benchmarking, provider adapters and PKI remain unimplemented.
-
-
-## v0.4.0: executable semantic contracts and evidence relations
-
-A new optional **semantic decision profile** represents requirements and prohibitions as deterministic predicates over JSON state. The challenger can generate counterfactual cases, retain the expected outcomes privately, and score an agent's answers by exact case ID, nonce and contract digest. The responder can also use a reference deterministic evaluator; passing alone **does not prove that an LLM understands natural language**, only that the contract's machine-readable decisions are reproduced.
-
-The new **evidence relationship graph** validates support, refutation and dependency links, rejects cycles and duplicate IDs, and reports potential claim contradictions with context separation. **External verification is mandatory** before marking any evidence as trusted. This is not a truth detector or provenance oracle.
-
-```bash
-python -m pip install -e .
-python -m unittest discover -s tests -v
-node --test js/*.test.mjs
-python examples/generate_semantic_vectors.py
-```
-
-Read [Semantic profile and test protocol](docs/SEMANTIC_CONFORMANCE.md). These features are a research extension, not a standardized feature of A2A or MCP.
-
-A local [paired semantic benchmark scorer](src/aeon_link/benchmark.py) is included; the sample data are synthetic and **do not** show a performance improvement over baseline protocols.
-
-## SDK 0.5.0 hardening — wire format remains 0.4.0
-
-This release adds a receiver-side signed-message gate, persistent replay checks
-(Python), awaited host-provided replay (Node), stricter cross-runtime JSON
-validation, metamorphic counterfactual/invariance tests and portable semantic
-decision receipts. **These are deterministic engineering controls, not a proof
-of AI understanding or superiority over A2A/MCP.**
-
-Run the expanded suite after `pip install -e .`:
+Run the reference examples:
 
 ```sh
-python -m unittest discover -s tests -v
-node --test js/*.test.mjs
-python examples/generate_canonical_fuzz.py > /tmp/aeon-fuzz.json
-node js/verify-fuzz.mjs /tmp/aeon-fuzz.json
-python examples/generate_validation_vectors.py > /tmp/aeon-validate.json
-node js/verify-validation.mjs /tmp/aeon-validate.json
-python examples/generate_receipt_vectors.py > /tmp/aeon-receipts.json
-node js/verify-receipts.mjs /tmp/aeon-receipts.json
+python examples/demo.py
+python examples/semantic_demo.py
+python examples/benchmark_sample.py     # synthetic data, not real model results
 ```
 
-The canonical fuzz fixture contains 400 reproducible inputs; the validation
-parity corpus contains 121 inputs; the decision receipt corpus contains seven.
-See [inbound security](docs/INBOUND_SECURITY.md) and
-[decision receipt limitations](docs/DECISION_RECEIPTS.md).
+See [the semantic conformance profile](docs/SEMANTIC_CONFORMANCE.md), [authenticated inbound gate](docs/INBOUND_SECURITY.md), [decision receipts](docs/DECISION_RECEIPTS.md) and [benchmark methodology](docs/BENCHMARKS.md).
 
-**Protocol wire version:** 0.4.0 · **SDK version:** 0.5.0. The canonical
-profile rejects prototype-reserved object keys that were previously allowed;
-implementations must fail closed rather than silently reinterpret data.
+## Optional live model experiments
+
+These calls may incur provider charges. Set API keys through environment variables or a secret manager: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`. **Never put secrets in commits or issue reports.** Models must be available to your account.
+
+```sh
+python examples/live_provider_benchmark.py --provider openai --model <MODEL_ID> --limit 12 --i-accept-api-costs
+python examples/live_model_relay.py --provider-a openai --model-a <MODEL_ID_A> --provider-b anthropic --model-b <MODEL_ID_B> --action write --i-accept-api-costs
+```
+
+The relay does **not** execute the action being evaluated. The benchmark checks paired *payload formats* under the same model, rather than claiming that AEON-Link competes with A2A or MCP as a transport. Its starter dataset is only 36 deterministic cases—too small and too synthetic to demonstrate universal superiority.
+
+## Security and independent assessment
+
+Treat all model-generated text and external evidence as untrusted. The SDK is **not an execution sandbox**. Signed content alone does not grant privileges. Production deployments need end-to-end HTTPS/TLS, trustworthy peer registration, key rotation, rate limits, a durable coordinated replay store and host-side idempotency.
+
+GitHub CodeQL provides **third-party automated static scanning**, not an independent human security audit. A qualified external reviewer has not yet completed an assessment, and no adoption as a universal standard has been demonstrated. See the [status ledger](docs/INDEPENDENT_REVIEW_AND_ADOPTION.md) and [private disclosure policy](SECURITY.md).
+
+## Research questions
+
+The next measured questions are whether semantic payloads reduce interpretation errors on independently graded, preregistered tasks; whether they increase token or latency costs; and whether independent implementations agree on edge cases. Publish both improvements and regressions without conflating structured data exchange with model comprehension.
+
+## References
+
+- [A2A 1.0](https://a2a-protocol.org/v1.0.0/specification/)
+- [MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
+- [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create)
+- [Anthropic Messages API](https://platform.claude.com/docs/en/api/messages)
+- [Gemini generateContent](https://ai.google.dev/api/generate-content)
+- [GitHub CodeQL](https://docs.github.com/en/code-security/concepts/code-scanning/codeql/codeql-code-scanning)

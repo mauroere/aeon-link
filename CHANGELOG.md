@@ -36,7 +36,7 @@
 ## SDK 0.5.0 (experimental; wire profile remains 0.4.0)
 
 - Add receiver-side authenticated, recipient-bound and policy-bound ingress
-  with durable Python replay registration and awaited host-provided Node replay (explicit success confirmation required).
+  with durable Python replay registration and awaited host-provided Node replay.
 - Refuse non-plain Node objects, accessors, sparse arrays, negative zero, and
   reserved prototype-property keys in canonical JSON; mirror reserved keys in
   Python to preserve parity.
@@ -48,5 +48,12 @@
   seven cross-language decision receipts, in addition to unit test suites.
 - Add explicit documentation of semantic and operational security gaps.
 
-- Fix environment-dependent RFC3339 handling: Python now validates dates
-  with a built-in strict parser instead of relying on optional jsonschema extras.
+## SDK 0.6.0 (experimental)
+
+- Fixed leaked SQLite connection during replay guard initialization (verified with warnings-as-errors).
+- Added fixed-origin HTTPS adapters for OpenAI Responses, Anthropic Messages and Gemini generateContent; disabled by default without secrets, no redirects and bounded request/response sizes.
+- Added opt-in paired semantic payload benchmark harness and offline mock tests; **not** a live benchmark outcome or proven superiority.
+- Added CodeQL static analysis, Dependabot weekly checks, external-assessor review scope, and private vulnerability-disclosure guidance.
+- Documented honest status of human independent audit, commercial API interoperability, paired comparisons and adoption.
+- No wire-format change; remains 0.4.0.
+- Added explicit opt-in two-commercial-model relay with a fail-closed semantic translation check, no action execution and mocked tests.
