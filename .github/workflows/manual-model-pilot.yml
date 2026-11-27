@@ -53,7 +53,7 @@ jobs:
             --provider "$PILOT_PROVIDER" --model "$PILOT_MODEL" \
             --split pilot --limit "$PILOT_LIMIT" \
             --i-accept-api-costs --output aeon-pilot-report.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: success()
         with:
           name: synthetic-pilot-report
